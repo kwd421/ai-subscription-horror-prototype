@@ -1,0 +1,12 @@
+{
+  "name": "ai-subscription-horror-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "build": "node scripts/build.mjs",
+    "package:single": "node -e \"import('./scripts/single-file-builder.mjs').then(m=>m.buildSingleFileHtml({rootDir:process.cwd(),outFile:'PLAY.html'}))\"",
+    "test": "node --test tests/*.test.mjs"
+  }
+}

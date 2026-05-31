@@ -1,0 +1,92 @@
+{
+  "title": "저는 결제하라고 나오면 닫아버립니다",
+  "assetRoot": "assets/generated/",
+  "policy": {
+    "visualSource": "Codex built-in image generation with local bitmap post-processing for Korean title text and fixed-canvas sprite transparency",
+    "noSvg": true,
+    "noExternalImages": true,
+    "noRealLogos": true
+  },
+  "backgrounds": {
+    "title": "title_screen.png",
+    "office": "office_main.png",
+    "leftDoorClosed": "office_left_door_closed.png",
+    "rightDoorClosed": "office_right_door_closed.png",
+    "powerout": "office_powerout.png",
+    "monitorFrame": "monitor_frame.png",
+    "gameOver": "gameover_bg.png",
+    "clear": "clear_bg.png"
+  },
+  "cameras": {
+    "STAGE": "cam_stage.png",
+    "LOBBY": "cam_lobby.png",
+    "SERVER": "cam_server.png",
+    "STORAGE": "cam_storage.png",
+    "LEFT_HALL_FAR": "cam_left_hall_far.png",
+    "LEFT_HALL_NEAR": "cam_left_hall_near.png",
+    "RIGHT_HALL_FAR": "cam_right_hall_far.png",
+    "RIGHT_HALL_NEAR": "cam_right_hall_near.png"
+  },
+  "effects": {
+    "staticNoise": "static_noise_tile.png",
+    "warningVignette": "warning_vignette.png",
+    "paywallPopup": "paywall_popup.png"
+  },
+  "spriteDefaults": {
+    "width": 512,
+    "height": 512,
+    "pivotX": 256,
+    "pivotY": 450,
+    "renderRule": "drawSpriteAtPivot(image, worldX, worldY, pivotX, pivotY, scale)"
+  },
+  "characters": {
+    "gemini": {
+      "displayName": "Gemini Doll",
+      "pivotX": 256,
+      "pivotY": 450,
+      "poses": {
+        "idle": "gemini_idle.png",
+        "sneaking": "gemini_sneaking.png",
+        "near_door": "gemini_near_door.png",
+        "running": "gemini_running.png",
+        "jumpscare": "gemini_jumpscare.png"
+      }
+    },
+    "grok": {
+      "displayName": "Grok Doll",
+      "pivotX": 256,
+      "pivotY": 450,
+      "poses": {
+        "idle": "grok_idle.png",
+        "sneaking": "grok_sneaking.png",
+        "near_door": "grok_near_door.png",
+        "running": "grok_running.png",
+        "jumpscare": "grok_jumpscare.png"
+      }
+    },
+    "chatgpt": {
+      "displayName": "ChatGPT Doll",
+      "pivotX": 256,
+      "pivotY": 450,
+      "poses": {
+        "idle": "chatgpt_idle.png",
+        "sneaking": "chatgpt_sneaking.png",
+        "near_door": "chatgpt_near_door.png",
+        "running": "chatgpt_running.png",
+        "jumpscare": "chatgpt_jumpscare.png"
+      }
+    },
+    "claude": {
+      "displayName": "Claude Doll",
+      "pivotX": 256,
+      "pivotY": 450,
+      "poses": {
+        "idle": "claude_idle.png",
+        "sneaking": "claude_sneaking.png",
+        "near_door": "claude_near_door.png",
+        "running": "claude_running.png",
+        "jumpscare": "claude_jumpscare.png"
+      }
+    }
+  }
+}
