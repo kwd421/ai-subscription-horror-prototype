@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#51200;&#45716; &#44208;&#51228;&#54616;&#46972;&#44256; &#45208;&#50724;&#47732; &#45803;&#50500;&#48260;&#47549;&#45768;&#45796;</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        overflow: hidden;
+        background: #02050a;
+        color: #eaf7ff;
+        font-family: "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      #game {
+        display: block;
+        max-width: 100vw;
+        max-height: 100vh;
+        aspect-ratio: 16 / 9;
+        background: #05070c;
+        cursor: crosshair;
+        image-rendering: auto;
+      }
+
+      #uiLayer {
+        position: fixed;
+        inset: 0;
+        pointer-events: auto;
+      }
+
+      #uiLayer button {
+        position: absolute;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: transparent;
+        opacity: 0.01;
+        pointer-events: auto;
+        cursor: pointer;
+      }
+
+      #loading {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #02050a;
+        color: #eaf7ff;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      #loading[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game" aria-label="AI subscription horror game canvas"></canvas>
+    <div id="uiLayer" aria-hidden="false"></div>
+    <div id="loading">&#51088;&#49328; &#47196;&#46377; &#51473;...</div>
+    <script>
+      (() => {
+        if (location.protocol === 'file:') {
+          const currentFile = location.pathname.split('/').pop().toLowerCase();
+          if (currentFile !== 'play.html') {
+            location.replace(new URL('PLAY.html', location.href).href);
+          }
+        }
+      })();
+    </script>
+    <script type="module" src="./src/main.js?v=20260531-8"></script>
+  </body>
+</html>
