@@ -123,12 +123,12 @@ test('CCTV renderer has a visible Claude sprint branch for left hall cameras', a
   assert.match(drawCameraEnemiesSource, /drawShadowedSprite\(ctx, sprite/);
 });
 
-test('index loading screen has themed art and a live percent target', async () => {
+test('index loading screen uses the CAM 1A stage art and a live percent target', async () => {
   const html = await readFile('index.html', 'utf8');
 
   assert.match(html, /id="loadingProgress"/);
-  assert.match(html, /assets\/generated\/loading_three_dolls\.png/);
-  assert.ok(existsSync('assets/generated/loading_three_dolls.png'));
+  assert.match(html, /assets\/generated\/cam_1a_stage_close_faces\.png/);
+  assert.ok(existsSync('assets/generated/cam_1a_stage_close_faces.png'));
 });
 
 test('manifest exposes the stare image for randomized title glitch flashes', async () => {
