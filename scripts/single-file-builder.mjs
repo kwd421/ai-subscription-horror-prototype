@@ -14,7 +14,8 @@ export async function buildSingleFileHtml({ rootDir, outFile }) {
 
   const packedManifest = await embedManifestPngs(absoluteRoot, manifest);
   const bundledCode = await bundleModules(mainPath, absoluteRoot);
-  const html = indexHtml
+  const inlinedIndexHtml = await embedHtmlPngReferences(indexHtml, absoluteRoot);
+  const html = inlinedIndexHtml
     .replace(/<script\s+type="module"\s+src="\.\/src\/main\.js[^"]*"><\/script>/, '')
     .replace(
       '</body>',
@@ -30,6 +31,26 @@ export async function buildSingleFileHtml({ rootDir, outFile }) {
   await mkdir(dirname(outFile), { recursive: true });
   await writeFile(outFile, html, 'utf8');
   return outFile;
+}
+
+async function embedHtmlPngReferences(html, rootDir) {
+  const refs = new Set();
+  for (const match of html.matchAll(/\b(?:src|href)=["']([^"']+\.png)["']/gi)) {
+    refs.add(match[1]);
+  }
+  for (const match of html.matchAll(/url\((['"]?)([^'")]+\.png)\1\)/gi)) {
+    refs.add(match[2]);
+  }
+
+  let inlined = html;
+  for (const ref of refs) {
+    if (/^(?:data:|https?:|\/\/)/i.test(ref)) continue;
+    const imagePath = resolve(rootDir, ref);
+    const buffer = await readFile(imagePath);
+    const dataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+    inlined = inlined.replaceAll(ref, dataUri);
+  }
+  return inlined;
 }
 
 async function readJson(path) {

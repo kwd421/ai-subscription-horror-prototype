@@ -167,9 +167,10 @@ function drawOffice(ctx, state, assets, now) {
 
 function drawCctv(ctx, state, assets, now) {
   const camera = getSelectedCamera(state);
-  drawCover(ctx, getCameraBackground(state, assets, camera), 0, 0, W, H);
-  drawCameraEnemies(ctx, state, assets, camera, now);
+  const occupiedPlate = getOccupiedCameraPlate(state, assets, camera);
   drawCover(ctx, assets.images.backgrounds.monitorFrame, 0, 0, W, H);
+  drawCover(ctx, occupiedPlate ?? getCameraBackground(state, assets, camera), 0, 0, W, H);
+  if (!occupiedPlate) drawCameraEnemies(ctx, state, assets, camera, now);
   drawStatic(ctx, assets, 0.08 + state.staticBurst * 0.2);
   drawCctvUi(ctx, state);
   if (state.paywallTimer > 0) drawPaywall(ctx, assets, state.paywallTimer);
@@ -379,6 +380,19 @@ function getCameraBackground(state, assets, camera) {
     return assets.images.cameras.claudeClosetStage0;
   }
   return assets.images.cameras[camera];
+}
+
+function getOccupiedCameraPlate(state, assets, camera) {
+  if (camera === ROOMS.CAM_1A_STAGE || camera === ROOMS.CAM_1C_CLAUDE_CLOSET) return null;
+  const visibleEnemyIds = [];
+  for (const enemy of state.enemies) {
+    if (enemy.currentRoom !== camera) continue;
+    if (enemy.id === 'claude' && enemy.visualState !== 'SPRINTING_LEFT_HALL') continue;
+    visibleEnemyIds.push(enemy.id);
+  }
+  if (!visibleEnemyIds.length) return null;
+  const variant = visibleEnemyIds.sort().join('+');
+  return assets.images.cameraOccupants?.[camera]?.[variant] ?? null;
 }
 
 function drawLightCone(ctx, state) {

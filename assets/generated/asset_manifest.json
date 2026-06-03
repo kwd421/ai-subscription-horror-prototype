@@ -42,6 +42,38 @@
     "CAM_4B_RIGHT_HALL_NEAR": "cam_4b_right_hall_near.png",
     "CAM_6_SERVER_KITCHEN": "cam_6_server_kitchen.png"
   },
+  "cameraOccupants": {
+    "CAM_1B_LOBBY": {
+      "gemini": "cam_1b_lobby_gemini.png",
+      "chatgpt": "cam_1b_lobby_chatgpt.png",
+      "chatgpt+gemini": "cam_1b_lobby_chatgpt_gemini.png"
+    },
+    "CAM_2A_LEFT_HALL_FAR": {
+      "gemini": "cam_2a_left_hall_far_gemini.png",
+      "claude": "cam_2a_left_hall_far_claude.png",
+      "claude+gemini": "cam_2a_left_hall_far_claude_gemini.png"
+    },
+    "CAM_2B_LEFT_HALL_NEAR": {
+      "gemini": "cam_2b_left_hall_near_gemini.png",
+      "claude": "cam_2b_left_hall_near_claude.png",
+      "claude+gemini": "cam_2b_left_hall_near_claude_gemini.png"
+    },
+    "CAM_4A_RIGHT_HALL_FAR": {
+      "grok": "cam_4a_right_hall_far_grok.png",
+      "chatgpt": "cam_4a_right_hall_far_chatgpt.png",
+      "chatgpt+grok": "cam_4a_right_hall_far_chatgpt_grok.png"
+    },
+    "CAM_4B_RIGHT_HALL_NEAR": {
+      "grok": "cam_4b_right_hall_near_grok.png",
+      "chatgpt": "cam_4b_right_hall_near_chatgpt.png",
+      "chatgpt+grok": "cam_4b_right_hall_near_chatgpt_grok.png"
+    },
+    "CAM_6_SERVER_KITCHEN": {
+      "grok": "cam_6_server_kitchen_grok.png",
+      "chatgpt": "cam_6_server_kitchen_chatgpt.png",
+      "chatgpt+grok": "cam_6_server_kitchen_chatgpt_grok.png"
+    }
+  },
   "effects": {
     "staticNoise": "static_overlay.png",
     "warningVignette": "warning_vignette.png",

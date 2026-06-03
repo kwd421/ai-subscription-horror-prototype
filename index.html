@@ -53,21 +53,142 @@
         inset: 0;
         display: grid;
         place-items: center;
+        overflow: hidden;
         background: #02050a;
         color: #eaf7ff;
         font-size: 22px;
         letter-spacing: 0;
+        z-index: 10;
+      }
+
+      #loading::before {
+        content: "";
+        position: absolute;
+        inset: -8%;
+        z-index: 2;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 44% 38%, rgba(255, 24, 36, 0.85) 0 0.7%, rgba(255, 24, 36, 0.32) 1.5%, transparent 3.8%),
+          radial-gradient(circle at 51% 38%, rgba(255, 24, 36, 0.85) 0 0.7%, rgba(255, 24, 36, 0.32) 1.5%, transparent 3.8%);
+        filter: blur(1.5px);
+        mix-blend-mode: screen;
+        opacity: 0;
+        animation: eyePulse 5.6s steps(1, end) infinite;
+      }
+
+      #loading::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        background:
+          repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 4px),
+          linear-gradient(90deg, transparent, rgba(126, 198, 232, 0.11), transparent);
+        opacity: 0.42;
+        animation: staticSweep 0.48s steps(2, end) infinite;
+      }
+
+      #loadingArt {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.72) contrast(1.16) saturate(0.9);
+        transform: scale(1.02);
+        animation: loadingDrift 7s ease-in-out infinite alternate;
+      }
+
+      .loading-copy {
+        position: relative;
+        z-index: 4;
+        align-self: end;
+        margin-bottom: clamp(28px, 6vh, 68px);
+        width: min(560px, calc(100vw - 32px));
+        padding: 14px 18px 16px;
+        border: 1px solid rgba(112, 169, 190, 0.58);
+        background: rgba(3, 10, 18, 0.74);
+        box-shadow: 0 0 22px rgba(65, 187, 255, 0.12);
+        text-align: center;
+        text-shadow: 0 0 12px rgba(122, 216, 255, 0.45);
+      }
+
+      .loading-kicker {
+        margin-bottom: 4px;
+        color: #ff6f7b;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      #loadingProgress {
+        font-size: clamp(18px, 2.4vw, 24px);
+        font-weight: 800;
       }
 
       #loading[hidden] {
         display: none;
+      }
+
+      @keyframes loadingDrift {
+        from {
+          transform: scale(1.02) translate3d(-0.4%, -0.2%, 0);
+        }
+        to {
+          transform: scale(1.045) translate3d(0.45%, 0.35%, 0);
+        }
+      }
+
+      @keyframes staticSweep {
+        0% {
+          opacity: 0.3;
+          transform: translateY(-1px);
+        }
+        50% {
+          opacity: 0.5;
+          transform: translateY(1px);
+        }
+        100% {
+          opacity: 0.36;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes eyePulse {
+        0%,
+        77%,
+        84%,
+        100% {
+          opacity: 0;
+        }
+        78%,
+        80% {
+          opacity: 0.95;
+        }
+        82% {
+          opacity: 0.45;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #loadingArt,
+        #loading::after,
+        #loading::before {
+          animation: none;
+        }
       }
     </style>
   </head>
   <body>
     <canvas id="game" aria-label="AI subscription horror game canvas"></canvas>
     <div id="uiLayer" aria-hidden="false"></div>
-    <div id="loading">&#51088;&#49328; &#47196;&#46377; &#51473;...</div>
+    <div id="loading" aria-live="polite" aria-busy="true">
+      <img id="loadingArt" src="assets/generated/loading_chatgpt_watch.png" alt="" />
+      <div class="loading-copy">
+        <div class="loading-kicker">치직... 치직---</div>
+        <div id="loadingProgress">자산 로딩 중... 0%</div>
+      </div>
+    </div>
     <script>
       (() => {
         if (location.protocol === 'file:') {

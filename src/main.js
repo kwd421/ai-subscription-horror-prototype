@@ -18,6 +18,7 @@ import {
 const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
 const loading = document.querySelector('#loading');
+const loadingProgress = document.querySelector('#loadingProgress');
 const uiLayer = document.querySelector('#uiLayer');
 const { width, height } = getCanvasSize();
 canvas.width = width;
@@ -40,7 +41,11 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-loadAssets()
+setLoadingProgress('자산 로딩 중... 0%');
+
+loadAssets(undefined, {
+  onProgress: ({ percent }) => setLoadingProgress(`자산 로딩 중... ${percent}%`)
+})
   .then((loadedAssets) => {
     assets = loadedAssets;
     loading.hidden = true;
@@ -48,9 +53,14 @@ loadAssets()
     if (!testMode) requestAnimationFrame(frame);
   })
   .catch((error) => {
-    loading.textContent = `자산 로딩 실패: ${error.message}`;
+    setLoadingProgress(`자산 로딩 실패: ${error.message}`);
     console.error(error);
   });
+
+function setLoadingProgress(message) {
+  if (loadingProgress) loadingProgress.textContent = message;
+  else loading.textContent = message;
+}
 
 function frame(now) {
   try {

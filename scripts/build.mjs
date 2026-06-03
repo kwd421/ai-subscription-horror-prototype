@@ -76,6 +76,9 @@ async function assertManifest() {
 
   for (const file of Object.values(manifest.backgrounds)) assertExists(rootDir, file);
   for (const file of Object.values(manifest.cameras)) assertExists(rootDir, file);
+  for (const variants of Object.values(manifest.cameraOccupants ?? {})) {
+    for (const file of Object.values(variants)) assertExists(rootDir, file);
+  }
   for (const file of Object.values(manifest.effects)) assertExists(rootDir, file);
   for (const character of Object.values(manifest.characters)) {
     if (character.pivotX !== 256 || character.pivotY !== 450) {
