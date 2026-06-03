@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import {
   CAMERAS,
   MONTH_LENGTH_SECONDS,
+  MONTH_PHASES,
   ROOMS,
   getMonthLabel,
   getPhaseLabel
@@ -17,13 +18,20 @@ import {
   calculateMonthTokenScore
 } from '../src/game/score.js';
 
-test('month constants use token-era pacing and Korean month labels', () => {
-  assert.equal(MONTH_LENGTH_SECONDS, 90);
-  assert.equal(getMonthLabel(1), '1개월차');
-  assert.equal(getMonthLabel(5), '5개월차');
-  assert.equal(getPhaseLabel(0), '월초');
-  assert.equal(getPhaseLabel(89.9), '월말 직전');
+test('month constants use FNAF-style 8m55s pacing and month phase boundaries', () => {
+  assert.equal(MONTH_LENGTH_SECONDS, 535);
+  assert.match(getMonthLabel(1), /^1/);
+  assert.match(getMonthLabel(5), /^5/);
+  assert.equal(getPhaseLabel(0), MONTH_PHASES[0]);
+  assert.equal(getPhaseLabel(89.9), MONTH_PHASES[0]);
+  assert.equal(getPhaseLabel(90), MONTH_PHASES[1]);
+  assert.equal(getPhaseLabel(179), MONTH_PHASES[2]);
+  assert.equal(getPhaseLabel(446), MONTH_PHASES[5]);
+  assert.equal(getPhaseLabel(534.9), MONTH_PHASES[5]);
   assert.ok(CAMERAS.includes(ROOMS.CAM_1C_CLAUDE_CLOSET));
+  assert.ok(CAMERAS.includes(ROOMS.CAM_3_SUPPLY_CLOSET));
+  assert.ok(CAMERAS.includes(ROOMS.CAM_5_BACKSTAGE));
+  assert.equal(CAMERAS.length, 10);
 });
 
 test('seeded rng is deterministic and stays inside [0, 1)', () => {
@@ -46,6 +54,8 @@ test('enemy definitions match month-era role contracts and invoice plans', () =>
   assert.deepEqual(gemini.route, [
     ROOMS.CAM_1A_STAGE,
     ROOMS.CAM_1B_LOBBY,
+    ROOMS.CAM_5_BACKSTAGE,
+    ROOMS.CAM_3_SUPPLY_CLOSET,
     ROOMS.CAM_2A_LEFT_HALL_FAR,
     ROOMS.CAM_2B_LEFT_HALL_NEAR,
     ROOMS.LEFT_DOOR
@@ -60,6 +70,7 @@ test('enemy definitions match month-era role contracts and invoice plans', () =>
   assert.equal(grok.side, 'right');
   assert.equal(grok.billingPlan, 'Grok Heavy $300');
   assert.equal(chatgpt.billingPlan, 'ChatGPT Pro $200');
+  assert.ok(chatgpt.route.includes(ROOMS.CAM_5_BACKSTAGE));
   assert.equal(claude.role, 'curtain-runner');
   assert.equal(claude.billingPlan, 'Claude Max $200');
   assert.equal(claude.visualState, 'CLOSET_STAGE_0');
@@ -87,8 +98,8 @@ test('active HUD source does not render realtime score text', async () => {
 
   assert.notEqual(hudStart, -1);
   assert.notEqual(hudEnd, -1);
-  assert.doesNotMatch(hudSource, /점수|score|getHudScore/i);
-  assert.match(hudSource, /남은 토큰/);
+  assert.doesNotMatch(hudSource, /score|getHudScore/i);
+  assert.match(hudSource, /labels\.tokens/);
 });
 
 test('CCTV map source has clickable cameras and no enemy position marker branch', async () => {
@@ -97,4 +108,40 @@ test('CCTV map source has clickable cameras and no enemy position marker branch'
   assert.match(renderSource, /camera:\$\{camera\}/);
   assert.doesNotMatch(renderSource, /drawEnemyDots|drawEnemyMapMarkers/);
   assert.doesNotMatch(renderSource, /state\.enemies\.forEach[\s\S]*ctx\.arc/);
+});
+
+test('CCTV map renders original-style connected CAM labels and YOU marker', async () => {
+  const renderSource = await readFile('src/game/render.js', 'utf8');
+
+  assert.match(renderSource, /drawCctvMapConnections\(ctx\)/);
+  assert.match(renderSource, /drawCctvMapLabel\(ctx, camera, x, y, w, h, selected\)/);
+  assert.match(renderSource, /const CAMERA_MAP_LABELS = Object\.freeze/);
+  assert.match(renderSource, /text\(ctx, 'CAM'/);
+  assert.match(renderSource, /function drawYouMarker/);
+  assert.match(renderSource, /text\(ctx, 'YOU'/);
+  assert.doesNotMatch(renderSource, /shortCameraLabel\(camera\)/);
+});
+
+test('HUD source follows original-style time, token, and usage placement', async () => {
+  const renderSource = await readFile('src/game/render.js', 'utf8');
+
+  assert.match(renderSource, /drawTopRightTime\(ctx, state\)/);
+  assert.match(renderSource, /drawBottomLeftTokenPanel\(ctx, state\)/);
+  assert.match(renderSource, /drawUsageBars\(ctx, getUsageBarsForRender\(state\)\)/);
+  assert.match(renderSource, /const CCTV_MAP_LAYOUT_ORIGIN = Object\.freeze\(\{ x: 910, y: 316 \}\)/);
+  assert.doesNotMatch(renderSource, /function drawGlobalToggles/);
+  assert.doesNotMatch(renderSource, /id, label: labelText, x: 1000, y: 590/);
+});
+
+test('renderer keeps global screen noise and the title easter egg path wired', async () => {
+  const renderSource = await readFile('src/game/render.js', 'utf8');
+  const titleStart = renderSource.indexOf('function drawTitle');
+  const titleEnd = renderSource.indexOf('function drawTitleGlitch', titleStart);
+  const titleSource = renderSource.slice(titleStart, titleEnd);
+
+  assert.match(renderSource, /drawScreenNoise\(ctx, assets, state, now\)/);
+  assert.match(renderSource, /function drawScreenNoise/);
+  assert.match(renderSource, /assets\.images\.effects\.staticNoise/);
+  assert.match(titleSource, /titleStare/);
+  assert.match(titleSource, /drawTitleGlitch\(ctx, assets, now\)/);
 });

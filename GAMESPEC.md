@@ -98,8 +98,9 @@ Fix these exact problems:
     If an enemy has already entered the office, door/light buttons should click/fail briefly, creating panic.
 
 12. CCTV room selection must support mouse clicks.
-    In addition to keyboard controls, every camera box on the CCTV mini-map must be clickable.
+    Every camera box on the CCTV mini-map must be clickable.
     Left/right camera arrows can remain, but clickable map boxes are required.
+    Active gameplay uses on-screen buttons and CCTV map clicks, not keyboard shortcuts.
 
 13. Jumpscares must be much scarier.
     Use the uploaded reference collage as composition guidance only:
@@ -430,8 +431,8 @@ Personality:
 - not a real portrait, not a logo
 
 Routes:
-- STAGE -> LOBBY -> LEFT_HALL_FAR -> LEFT_HALL_NEAR -> LEFT_DOOR
-- May occasionally skip from LOBBY to LEFT_HALL_NEAR on higher months
+- STAGE -> LOBBY -> BACKSTAGE -> SUPPLY_CLOSET -> LEFT_HALL_FAR -> LEFT_HALL_NEAR -> LEFT_DOOR
+- May occasionally skip from BACKSTAGE or SUPPLY_CLOSET to LEFT_HALL_NEAR on higher months
 - May backtrack one step on failed action or random branch
 - After blocked at left door, usually returns to LOBBY, not always STAGE
 - On low AI, may stay at left door for a while, forcing token pressure
@@ -472,7 +473,7 @@ Behavior:
 - Mostly inactive until month 3.
 - Moves less often than others but becomes dangerous once advanced.
 - Route is mostly one-way:
-  STAGE -> LOBBY -> SERVER -> RIGHT_HALL_FAR -> RIGHT_HALL_NEAR -> RIGHT_DOOR
+  STAGE -> LOBBY -> BACKSTAGE -> SERVER -> RIGHT_HALL_FAR -> RIGHT_HALL_NEAR -> RIGHT_DOOR
 - It should rarely move backward.
 - It can be frozen by watching its current camera.
 - If it reaches RIGHT_HALL_NEAR, the player should rely on right door/light.
@@ -533,8 +534,10 @@ Rooms:
 - CAM_1C_CLAUDE_CLOSET / "CAM 1C: 무료 체험 커튼"
 - CAM_2A_LEFT_HALL_FAR / "CAM 2A: 왼쪽 복도"
 - CAM_2B_LEFT_HALL_NEAR / "CAM 2B: 왼쪽 문 앞"
+- CAM_3_SUPPLY_CLOSET / "CAM 3: 부품 창고"
 - CAM_4A_RIGHT_HALL_FAR / "CAM 4A: 오른쪽 복도"
 - CAM_4B_RIGHT_HALL_NEAR / "CAM 4B: 오른쪽 문 앞"
+- CAM_5_BACKSTAGE / "CAM 5: 백스테이지"
 - CAM_6_SERVER_KITCHEN / "CAM 6: 서버실", optional visual-noisy/audio-heavy camera
 
 Office is not a camera.
@@ -544,6 +547,7 @@ CCTV screen:
 - Mini-map overlay in lower-right or right side.
 - Camera boxes are clickable.
 - Selected camera box can be highlighted.
+- Player office location may be shown as a "YOU" marker.
 - Enemy positions must NOT be shown on the map.
 - The only way to know where enemies are is by looking at the actual camera feed or using door lights.
 
@@ -565,16 +569,10 @@ LIGHT SYSTEM
 Add office left/right light controls.
 
 Input mapping:
-- C: open/close CCTV
-- Esc: close CCTV
-- Q: toggle left door
-- E: toggle right door
-- A: hold/toggle left light while in office
-- D: hold/toggle right light while in office
-- Mouse: click all UI controls
-- On CCTV screen, A/D or arrow keys can switch cameras, but map click is required too.
-- M: mute
-- R: reduce motion
+- Mouse: click all UI controls.
+- Office screen: click CCTV, left/right door, and left/right light buttons.
+- CCTV screen: click close, previous/next camera buttons, or a camera box on the map.
+- Active gameplay has no keyboard shortcuts, no in-game mute button, and no in-game reduce-motion button.
 
 Office UI:
 - Left side has door button and light button.
@@ -852,7 +850,7 @@ You are done only when:
 - Start begins 1개월차.
 - CCTV opens/closes.
 - CCTV camera boxes are clickable with mouse.
-- Keyboard controls work.
+- Mouse/touch controls work.
 - Enemies move with randomized action opportunities.
 - Month 1 does not always play the same route.
 - Non-Claude enemies freeze when the player watches their current camera.

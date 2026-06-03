@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { ROOMS } from '../src/game/constants.js';
+import { MONTH_LENGTH_SECONDS, ROOMS } from '../src/game/constants.js';
 import { createEnemy } from '../src/game/enemies.js';
 import { createSeededRng } from '../src/game/rng.js';
 import {
@@ -41,7 +41,7 @@ test('start run, CCTV map selection, doors, and lights update month-token state'
 
   assert.equal(state.screen, STATES.OFFICE);
   assert.equal(state.currentMonth, 1);
-  assert.equal(state.tokens, 100);
+  assert.equal(state.tokens, 99.9);
   assert.equal(toggleCamera(state), true);
   assert.equal(state.screen, STATES.CCTV);
   assert.equal(getSelectedCamera(state), ROOMS.CAM_1A_STAGE);
@@ -59,6 +59,49 @@ test('start run, CCTV map selection, doors, and lights update month-token state'
   assert.equal(state.lights.rightOn, true);
 });
 
+test('token drain uses FNAF-style internal 999 counter, usage bars, and passive monthly drain', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'fnaf-token-drain' });
+  state.enemies = [];
+
+  tick(state, 10, 0.5);
+  assert.equal(state.tokens, 98.9);
+
+  toggleCamera(state);
+  state.doors.leftClosed = true;
+  state.doors.rightClosed = true;
+  state.lights.leftOn = true;
+  tick(state, 3, 0.25);
+  assert.equal(state.tokens, 97.4);
+
+  startRun(state, { seed: 'fnaf-passive-drain' });
+  state.enemies = [];
+  state.currentMonth = 3;
+  tick(state, 5, 0.5);
+  assert.equal(state.tokens, 99.3);
+});
+
+test('title stare glitch appears once per randomized 10 to 20 second window', () => {
+  const state = createInitialState();
+
+  assert.ok(state.titleGlitch.nextIn >= 10);
+  assert.ok(state.titleGlitch.nextIn <= 20);
+  assert.equal(state.titleGlitch.flashTimer, 0);
+
+  const firstDelay = state.titleGlitch.nextIn;
+  tick(state, firstDelay + 0.1, 0.1);
+
+  assert.ok(state.titleGlitch.flashTimer > 0);
+  assert.ok(state.titleGlitch.flashTimer <= 0.5);
+  assert.ok(state.staticBurst >= 0.65);
+  assert.ok(state.titleGlitch.nextIn >= 10);
+  assert.ok(state.titleGlitch.nextIn <= 20);
+
+  tick(state, 1, 0.1);
+
+  assert.equal(state.titleGlitch.flashTimer, 0);
+});
+
 test('month 1 randomized action opportunities do not always produce the same first approaches', () => {
   const signatures = new Set();
   const sides = new Set();
@@ -66,7 +109,7 @@ test('month 1 randomized action opportunities do not always produce the same fir
   for (let run = 0; run < 50; run += 1) {
     const state = createInitialState();
     startRun(state, { seed: `month-1-random-${run}` });
-    tick(state, 75, 0.5);
+    tick(state, 360, 0.5);
     const firstTwo = state.approachLog.slice(0, 2).map((entry) => `${entry.id}:${entry.side}`).join('|');
     if (firstTwo) signatures.add(firstTwo);
     state.approachLog.forEach((entry) => sides.add(entry.side));
@@ -83,7 +126,7 @@ test('watching Gemini camera freezes movement for 30 simulated seconds', () => {
   const gemini = {
     ...createEnemy('gemini', 5, createSeededRng('freeze-gemini')),
     currentRoom: ROOMS.CAM_2A_LEFT_HALL_FAR,
-    routeIndex: 2,
+    routeIndex: 4,
     actionCooldown: 0.1,
     aiLevelsByMonthPhase: { 5: [20, 20, 20, 20, 20, 20] }
   };
@@ -148,7 +191,7 @@ test('left light reveals a door enemy and closed door repels it', () => {
     {
       ...createEnemy('gemini', 2, createSeededRng('light-reveal')),
       currentRoom: ROOMS.LEFT_DOOR,
-      routeIndex: 4,
+      routeIndex: 6,
       side: 'left',
       doorAttackTimer: 0.4
     }
@@ -169,7 +212,7 @@ test('open door attack flows through fakeout, jumpscare, and invoice score', () 
   startRun(state, { seed: 'invoice' });
   state.stageTokenResults = [80.1, 70.2];
   state.currentMonth = 3;
-  state.elapsed = 45;
+  state.elapsed = MONTH_LENGTH_SECONDS / 2;
   state.tokens = 50;
   state.enemies = [
     {
@@ -225,7 +268,7 @@ test('surviving five months records token results and reaches final clear', () =
 
   for (let month = 1; month <= 5; month += 1) {
     state.tokens = 80 + month / 10;
-    state.elapsed = 90;
+    state.elapsed = MONTH_LENGTH_SECONDS;
     updateState(state, 0.1, silentAudio);
     if (month < 5) {
       assert.equal(state.screen, STATES.NIGHT_CLEAR);

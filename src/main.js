@@ -4,7 +4,6 @@ import { renderGame, getCanvasSize } from './game/render.js';
 import {
   STATES,
   advanceAfterClear,
-  closeCamera,
   createInitialState,
   selectCamera,
   startRun,
@@ -102,39 +101,6 @@ function handleCanvasInput(event) {
   }
 }
 
-window.addEventListener('keydown', (event) => {
-  void safeAudioUnlock();
-  const key = event.key.toLowerCase();
-  if (['arrowleft', 'arrowright', ' ', 'enter', 'c', 'q', 'e', 'escape', 'a', 'd'].includes(key)) {
-    event.preventDefault();
-  }
-  if (key === 'enter' || key === ' ') {
-    if (state.screen === STATES.TITLE) performAction('start');
-    else if (state.screen === STATES.HOW_TO_PLAY) performAction('exitToTitle');
-    else if (state.screen === STATES.NIGHT_CLEAR) performAction('nextNight');
-    else if (state.screen === STATES.GAME_OVER || state.screen === STATES.FINAL_CLEAR) performAction('retry');
-  }
-  if (key === 'c') performAction('toggleCctv');
-  if (key === 'escape') {
-    if (state.screen === STATES.CCTV) closeCamera(state);
-    else if (state.screen === STATES.HOW_TO_PLAY) state.screen = STATES.TITLE;
-  }
-  if (key === 'arrowleft') performAction('prevCamera');
-  if (key === 'arrowright') performAction('nextCamera');
-  if (key === 'a') {
-    if (state.screen === STATES.CCTV) performAction('prevCamera');
-    else performAction('leftLight');
-  }
-  if (key === 'd') {
-    if (state.screen === STATES.CCTV) performAction('nextCamera');
-    else performAction('rightLight');
-  }
-  if (key === 'q') performAction('leftDoor');
-  if (key === 'e') performAction('rightDoor');
-  if (key === 'm') performAction('mute');
-  if (key === 'r') performAction('motion');
-});
-
 uiLayer.addEventListener('click', (event) => {
   const action = event.target?.dataset?.action;
   if (!action) return;
@@ -188,14 +154,6 @@ function performAction(action) {
       break;
     case 'rightLight':
       if (toggleLight(state, 'right')) audio.click();
-      break;
-    case 'mute':
-      state.muted = !state.muted;
-      audio.setMuted(state.muted);
-      break;
-    case 'motion':
-      state.reduceMotion = !state.reduceMotion;
-      audio.click();
       break;
     default:
       break;

@@ -1,6 +1,7 @@
 export const GAME_TITLE = '저는 결제하라고 나오면 닫아버립니다';
-export const MONTH_LENGTH_SECONDS = 90;
+export const MONTH_LENGTH_SECONDS = 535;
 export const MONTH_COUNT = 5;
+export const MONTH_PHASE_START_SECONDS = Object.freeze([0, 90, 179, 268, 357, 446]);
 
 export const MONTH_PHASES = Object.freeze([
   '월초',
@@ -17,8 +18,10 @@ export const ROOMS = Object.freeze({
   CAM_1C_CLAUDE_CLOSET: 'CAM_1C_CLAUDE_CLOSET',
   CAM_2A_LEFT_HALL_FAR: 'CAM_2A_LEFT_HALL_FAR',
   CAM_2B_LEFT_HALL_NEAR: 'CAM_2B_LEFT_HALL_NEAR',
+  CAM_3_SUPPLY_CLOSET: 'CAM_3_SUPPLY_CLOSET',
   CAM_4A_RIGHT_HALL_FAR: 'CAM_4A_RIGHT_HALL_FAR',
   CAM_4B_RIGHT_HALL_NEAR: 'CAM_4B_RIGHT_HALL_NEAR',
+  CAM_5_BACKSTAGE: 'CAM_5_BACKSTAGE',
   CAM_6_SERVER_KITCHEN: 'CAM_6_SERVER_KITCHEN',
   LEFT_DOOR: 'LEFT_DOOR',
   RIGHT_DOOR: 'RIGHT_DOOR'
@@ -30,8 +33,10 @@ export const CAMERAS = Object.freeze([
   ROOMS.CAM_1C_CLAUDE_CLOSET,
   ROOMS.CAM_2A_LEFT_HALL_FAR,
   ROOMS.CAM_2B_LEFT_HALL_NEAR,
+  ROOMS.CAM_3_SUPPLY_CLOSET,
   ROOMS.CAM_4A_RIGHT_HALL_FAR,
   ROOMS.CAM_4B_RIGHT_HALL_NEAR,
+  ROOMS.CAM_5_BACKSTAGE,
   ROOMS.CAM_6_SERVER_KITCHEN
 ]);
 
@@ -41,8 +46,10 @@ export const CAMERA_LABELS = Object.freeze({
   [ROOMS.CAM_1C_CLAUDE_CLOSET]: 'CAM 1C: 무료 체험 커튼',
   [ROOMS.CAM_2A_LEFT_HALL_FAR]: 'CAM 2A: 왼쪽 복도',
   [ROOMS.CAM_2B_LEFT_HALL_NEAR]: 'CAM 2B: 왼쪽 문 앞',
+  [ROOMS.CAM_3_SUPPLY_CLOSET]: 'CAM 3: 부품 창고',
   [ROOMS.CAM_4A_RIGHT_HALL_FAR]: 'CAM 4A: 오른쪽 복도',
   [ROOMS.CAM_4B_RIGHT_HALL_NEAR]: 'CAM 4B: 오른쪽 문 앞',
+  [ROOMS.CAM_5_BACKSTAGE]: 'CAM 5: 백스테이지',
   [ROOMS.CAM_6_SERVER_KITCHEN]: 'CAM 6: 서버실'
 });
 
@@ -80,12 +87,14 @@ export function getMonthLabel(month) {
 
 export function getPhaseIndex(elapsedSeconds) {
   if (elapsedSeconds >= MONTH_LENGTH_SECONDS) return MONTH_PHASES.length - 1;
-  const phaseLength = MONTH_LENGTH_SECONDS / MONTH_PHASES.length;
-  return Math.max(0, Math.min(MONTH_PHASES.length - 1, Math.floor(elapsedSeconds / phaseLength)));
+  for (let index = MONTH_PHASE_START_SECONDS.length - 1; index >= 0; index -= 1) {
+    if (elapsedSeconds >= MONTH_PHASE_START_SECONDS[index]) return index;
+  }
+  return 0;
 }
 
 export function getPhaseLabel(elapsedSecondsOrIndex) {
-  const index = Number.isInteger(elapsedSecondsOrIndex)
+  const index = Number.isInteger(elapsedSecondsOrIndex) && elapsedSecondsOrIndex >= 0 && elapsedSecondsOrIndex < MONTH_PHASES.length
     ? elapsedSecondsOrIndex
     : getPhaseIndex(elapsedSecondsOrIndex);
   return MONTH_PHASES[Math.max(0, Math.min(MONTH_PHASES.length - 1, index))];

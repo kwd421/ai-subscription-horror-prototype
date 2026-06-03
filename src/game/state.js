@@ -34,20 +34,26 @@ export const STATES = Object.freeze({
   FINAL_CLEAR: 'FINAL_CLEAR'
 });
 
-const BASE_TOKEN_DRAIN_PER_SEC = 0.12;
-const CCTV_TOKEN_DRAIN_PER_SEC = 0.32;
-const DOOR_TOKEN_DRAIN_PER_SEC = 0.38;
-const LIGHT_TOKEN_DRAIN_PER_SEC = 0.24;
-const MONTH_MULTIPLIERS = Object.freeze({ 4: 1.1, 5: 1.18 });
+const TOKEN_COUNTER_MAX = 999;
+const TOKEN_DISPLAY_DIVISOR = 10;
+const PASSIVE_TOKEN_DRAIN_INTERVALS = Object.freeze({ 2: 6, 3: 5, 4: 4, 5: 3 });
+const TITLE_GLITCH_MIN_DELAY = 10;
+const TITLE_GLITCH_MAX_DELAY = 20;
+const TITLE_GLITCH_MIN_DURATION = 0.2;
+const TITLE_GLITCH_MAX_DURATION = 0.5;
 
 export function createInitialState() {
+  const rng = createSeededRng('title');
   return {
     screen: STATES.TITLE,
     currentMonth: 1,
     completedMonths: 0,
     stageTokenResults: [],
     lastMonthTokenScore: 0,
-    tokens: 100,
+    tokenUnits: TOKEN_COUNTER_MAX,
+    tokens: tokenPercentFromUnits(TOKEN_COUNTER_MAX),
+    tokenDrainAccumulator: 0,
+    passiveTokenDrainAccumulator: 0,
     elapsed: 0,
     cameras: [...CAMERAS],
     selectedCameraIndex: 0,
@@ -66,7 +72,7 @@ export function createInitialState() {
       right: []
     },
     enemies: [],
-    rng: createSeededRng('title'),
+    rng,
     stats: emptyStats(),
     defeatedBy: '',
     defeatedId: '',
@@ -86,6 +92,7 @@ export function createInitialState() {
     reduceMotion: false,
     muted: false,
     approachLog: [],
+    titleGlitch: createTitleGlitch(rng),
     ui: []
   };
 }
@@ -113,7 +120,10 @@ export function startMonth(state, month, options = {}) {
   const rng = options.rng ?? (options.seed === undefined ? createRuntimeRng() : createSeededRng(options.seed));
   state.screen = STATES.OFFICE;
   state.currentMonth = month;
-  state.tokens = 100;
+  state.tokenUnits = TOKEN_COUNTER_MAX;
+  state.tokens = tokenPercentFromUnits(TOKEN_COUNTER_MAX);
+  state.tokenDrainAccumulator = 0;
+  state.passiveTokenDrainAccumulator = 0;
   state.elapsed = 0;
   state.selectedCameraIndex = 0;
   state.cameraOpen = false;
@@ -219,6 +229,11 @@ export function updateState(state, dt, audio) {
   state.screenShake = Math.max(0, state.screenShake - dt);
   state.panicTimer = Math.max(0, state.panicTimer - dt);
 
+  if (state.screen === STATES.TITLE) {
+    updateTitleGlitch(state, dt);
+    return;
+  }
+
   if (state.screen === STATES.GAME_OVER_FAKEOUT) {
     state.fakeoutTimer -= dt;
     if (state.fakeoutTimer <= 0) {
@@ -266,22 +281,79 @@ export function updateState(state, dt, audio) {
   refreshVisibleDoorThreats(state);
 }
 
+function createTitleGlitch(rng) {
+  return {
+    nextIn: rng.range(TITLE_GLITCH_MIN_DELAY, TITLE_GLITCH_MAX_DELAY),
+    flashTimer: 0
+  };
+}
+
+function updateTitleGlitch(state, dt) {
+  if (!state.titleGlitch) state.titleGlitch = createTitleGlitch(state.rng);
+  if (state.titleGlitch.flashTimer > 0) {
+    state.titleGlitch.flashTimer = Math.max(0, state.titleGlitch.flashTimer - dt);
+    return;
+  }
+
+  state.titleGlitch.nextIn -= dt;
+  if (state.titleGlitch.nextIn <= 0) {
+    state.titleGlitch.flashTimer = state.rng.range(TITLE_GLITCH_MIN_DURATION, TITLE_GLITCH_MAX_DURATION);
+    state.titleGlitch.nextIn = state.rng.range(TITLE_GLITCH_MIN_DELAY, TITLE_GLITCH_MAX_DELAY);
+    state.staticBurst = Math.max(state.staticBurst, 0.75);
+    state.screenShake = Math.max(state.screenShake, 0.12);
+  }
+}
+
+function tokenPercentFromUnits(units) {
+  return Number((Math.max(0, Math.min(TOKEN_COUNTER_MAX, units)) / TOKEN_DISPLAY_DIVISOR).toFixed(1));
+}
+
+function syncTokenUnitsFromDisplayedTokens(state) {
+  const displayedUnits = Math.round(Math.max(0, Math.min(99.9, state.tokens)) * TOKEN_DISPLAY_DIVISOR);
+  if (Math.abs(displayedUnits - state.tokenUnits) > 1) {
+    state.tokenUnits = displayedUnits;
+    state.tokenDrainAccumulator = 0;
+    state.passiveTokenDrainAccumulator = 0;
+  }
+}
+
+function getUsageBars(state) {
+  let usage = 1;
+  if (state.screen === STATES.CCTV) usage += 1;
+  if (state.doors.leftClosed) usage += 1;
+  if (state.doors.rightClosed) usage += 1;
+  if (state.lights.leftOn) usage += 1;
+  if (state.lights.rightOn) usage += 1;
+  return usage;
+}
+
 function drainTokens(state, dt, audio) {
   if (state.tokens <= 0) return;
-  const multiplier = MONTH_MULTIPLIERS[state.currentMonth] ?? 1;
-  let drain = BASE_TOKEN_DRAIN_PER_SEC * multiplier;
-  if (state.screen === STATES.CCTV) drain += CCTV_TOKEN_DRAIN_PER_SEC;
-  if (state.doors.leftClosed) drain += DOOR_TOKEN_DRAIN_PER_SEC;
-  if (state.doors.rightClosed) drain += DOOR_TOKEN_DRAIN_PER_SEC;
-  if (state.lights.leftOn) drain += LIGHT_TOKEN_DRAIN_PER_SEC;
-  if (state.lights.rightOn) drain += LIGHT_TOKEN_DRAIN_PER_SEC;
+  syncTokenUnitsFromDisplayedTokens(state);
 
-  state.tokens = Math.max(0, state.tokens - drain * dt);
+  state.tokenDrainAccumulator += dt;
+  while (state.tokenDrainAccumulator >= 1 && state.tokenUnits > 0) {
+    state.tokenUnits -= getUsageBars(state);
+    state.tokenDrainAccumulator -= 1;
+  }
+
+  const passiveInterval = PASSIVE_TOKEN_DRAIN_INTERVALS[state.currentMonth];
+  if (passiveInterval) {
+    state.passiveTokenDrainAccumulator += dt;
+    while (state.passiveTokenDrainAccumulator >= passiveInterval && state.tokenUnits > 0) {
+      state.tokenUnits -= 1;
+      state.passiveTokenDrainAccumulator -= passiveInterval;
+    }
+  }
+
+  state.tokenUnits = Math.max(0, Math.min(TOKEN_COUNTER_MAX, Math.round(state.tokenUnits)));
+  state.tokens = tokenPercentFromUnits(state.tokenUnits);
   if (state.tokens <= 12 && state.lowTokenBeepCooldown <= 0) {
     state.lowTokenBeepCooldown = 4;
     audio?.beep?.();
   }
   if (state.tokens <= 0) {
+    state.tokenUnits = 0;
     state.stats.tokenOut = true;
     state.cameraOpen = false;
     state.screen = STATES.OFFICE;
@@ -328,7 +400,10 @@ function tickEnemies(state, dt, audio) {
         nextEnemy = resolution.enemy;
         if (resolution.outcome === 'repelled') {
           state.stats.successfulDoorBlocks += 1;
-          if (resolution.tokenPenalty) state.tokens = Math.max(0, state.tokens - resolution.tokenPenalty);
+          if (resolution.tokenPenalty) {
+            state.tokens = Math.max(0, state.tokens - resolution.tokenPenalty);
+            state.tokenUnits = Math.round(state.tokens * TOKEN_DISPLAY_DIVISOR);
+          }
           state.staticBurst = Math.max(state.staticBurst, 0.75);
           state.screenShake = Math.max(state.screenShake, 0.3);
           audio?.thud?.();

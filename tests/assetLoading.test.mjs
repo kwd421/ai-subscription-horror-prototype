@@ -93,8 +93,10 @@ test('manifest defines room-specific occupied CCTV plates including multi-enemy 
     CAM_1B_LOBBY: ['gemini', 'chatgpt', 'chatgpt+gemini'],
     CAM_2A_LEFT_HALL_FAR: ['gemini', 'claude', 'claude+gemini'],
     CAM_2B_LEFT_HALL_NEAR: ['gemini', 'claude', 'claude+gemini'],
+    CAM_3_SUPPLY_CLOSET: ['gemini'],
     CAM_4A_RIGHT_HALL_FAR: ['grok', 'chatgpt', 'chatgpt+grok'],
     CAM_4B_RIGHT_HALL_NEAR: ['grok', 'chatgpt', 'chatgpt+grok'],
+    CAM_5_BACKSTAGE: ['gemini', 'chatgpt', 'chatgpt+gemini'],
     CAM_6_SERVER_KITCHEN: ['grok', 'chatgpt', 'chatgpt+grok']
   };
 
@@ -125,6 +127,13 @@ test('index loading screen has themed art and a live percent target', async () =
   const html = await readFile('index.html', 'utf8');
 
   assert.match(html, /id="loadingProgress"/);
-  assert.match(html, /assets\/generated\/loading_chatgpt_watch\.png/);
+  assert.match(html, /assets\/generated\/loading_three_dolls\.png/);
+  assert.ok(existsSync('assets/generated/loading_three_dolls.png'));
+});
+
+test('manifest exposes the stare image for randomized title glitch flashes', async () => {
+  const manifest = JSON.parse(await readFile('assets/generated/asset_manifest.json', 'utf8'));
+
+  assert.equal(manifest.backgrounds.titleStare, 'loading_chatgpt_watch.png');
   assert.ok(existsSync('assets/generated/loading_chatgpt_watch.png'));
 });

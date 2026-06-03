@@ -41,6 +41,8 @@ export const ENEMY_DEFS = Object.freeze({
     route: [
       ROOMS.CAM_1A_STAGE,
       ROOMS.CAM_1B_LOBBY,
+      ROOMS.CAM_5_BACKSTAGE,
+      ROOMS.CAM_3_SUPPLY_CLOSET,
       ROOMS.CAM_2A_LEFT_HALL_FAR,
       ROOMS.CAM_2B_LEFT_HALL_NEAR,
       ROOMS.LEFT_DOOR
@@ -73,6 +75,7 @@ export const ENEMY_DEFS = Object.freeze({
     route: [
       ROOMS.CAM_1A_STAGE,
       ROOMS.CAM_1B_LOBBY,
+      ROOMS.CAM_5_BACKSTAGE,
       ROOMS.CAM_6_SERVER_KITCHEN,
       ROOMS.CAM_4A_RIGHT_HALL_FAR,
       ROOMS.CAM_4B_RIGHT_HALL_NEAR,
@@ -201,7 +204,7 @@ export function isDoorRoom(room) {
 }
 
 export function sideForRoom(room) {
-  if ([ROOMS.CAM_2A_LEFT_HALL_FAR, ROOMS.CAM_2B_LEFT_HALL_NEAR, ROOMS.LEFT_DOOR].includes(room)) return 'left';
+  if ([ROOMS.CAM_3_SUPPLY_CLOSET, ROOMS.CAM_2A_LEFT_HALL_FAR, ROOMS.CAM_2B_LEFT_HALL_NEAR, ROOMS.LEFT_DOOR].includes(room)) return 'left';
   if ([ROOMS.CAM_4A_RIGHT_HALL_FAR, ROOMS.CAM_4B_RIGHT_HALL_NEAR, ROOMS.RIGHT_DOOR].includes(room)) return 'right';
   return null;
 }
@@ -408,7 +411,7 @@ function nextActionCooldown(enemyOrDef, rng) {
 function poseForPathRoom(room) {
   if (isDoorRoom(room)) return 'door_peek';
   if ([ROOMS.CAM_2A_LEFT_HALL_FAR, ROOMS.CAM_4A_RIGHT_HALL_FAR].includes(room)) return 'hallway_far';
-  if ([ROOMS.CAM_2B_LEFT_HALL_NEAR, ROOMS.CAM_4B_RIGHT_HALL_NEAR].includes(room)) return 'hallway_near';
+  if ([ROOMS.CAM_3_SUPPLY_CLOSET, ROOMS.CAM_2B_LEFT_HALL_NEAR, ROOMS.CAM_4B_RIGHT_HALL_NEAR].includes(room)) return 'hallway_near';
   return 'idle_close';
 }
 

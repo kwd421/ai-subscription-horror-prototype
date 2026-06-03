@@ -25,6 +25,9 @@ const CAMERA_ANCHORS = Object.freeze({
     gemini: [650, 690, 0.88],
     claude: [585, 690, 0.96]
   },
+  [ROOMS.CAM_3_SUPPLY_CLOSET]: {
+    gemini: [470, 650, 0.72]
+  },
   [ROOMS.CAM_4A_RIGHT_HALL_FAR]: {
     grok: [660, 620, 0.52],
     chatgpt: [520, 620, 0.5]
@@ -33,21 +36,41 @@ const CAMERA_ANCHORS = Object.freeze({
     grok: [680, 690, 0.9],
     chatgpt: [540, 690, 0.86]
   },
+  [ROOMS.CAM_5_BACKSTAGE]: {
+    gemini: [370, 640, 0.65],
+    chatgpt: [680, 640, 0.62]
+  },
   [ROOMS.CAM_6_SERVER_KITCHEN]: {
     grok: [720, 620, 0.54],
     chatgpt: [520, 620, 0.5]
   }
 });
 
+const CCTV_MAP_LAYOUT_ORIGIN = Object.freeze({ x: 910, y: 316 });
 const CCTV_MAP_LAYOUT = Object.freeze({
-  [ROOMS.CAM_1A_STAGE]: [1012, 110, 98, 34],
-  [ROOMS.CAM_1B_LOBBY]: [1012, 156, 98, 34],
-  [ROOMS.CAM_1C_CLAUDE_CLOSET]: [1130, 156, 98, 34],
-  [ROOMS.CAM_2A_LEFT_HALL_FAR]: [936, 220, 98, 34],
-  [ROOMS.CAM_2B_LEFT_HALL_NEAR]: [936, 266, 98, 34],
-  [ROOMS.CAM_4A_RIGHT_HALL_FAR]: [1114, 220, 98, 34],
-  [ROOMS.CAM_4B_RIGHT_HALL_NEAR]: [1114, 266, 98, 34],
-  [ROOMS.CAM_6_SERVER_KITCHEN]: [1050, 334, 98, 34]
+  [ROOMS.CAM_1A_STAGE]: [CCTV_MAP_LAYOUT_ORIGIN.x + 86, CCTV_MAP_LAYOUT_ORIGIN.y + 8, 58, 42],
+  [ROOMS.CAM_1B_LOBBY]: [CCTV_MAP_LAYOUT_ORIGIN.x + 86, CCTV_MAP_LAYOUT_ORIGIN.y + 82, 58, 42],
+  [ROOMS.CAM_1C_CLAUDE_CLOSET]: [CCTV_MAP_LAYOUT_ORIGIN.x + 12, CCTV_MAP_LAYOUT_ORIGIN.y + 150, 58, 42],
+  [ROOMS.CAM_2A_LEFT_HALL_FAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 80, CCTV_MAP_LAYOUT_ORIGIN.y + 240, 58, 42],
+  [ROOMS.CAM_2B_LEFT_HALL_NEAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 80, CCTV_MAP_LAYOUT_ORIGIN.y + 286, 58, 42],
+  [ROOMS.CAM_3_SUPPLY_CLOSET]: [CCTV_MAP_LAYOUT_ORIGIN.x + 8, CCTV_MAP_LAYOUT_ORIGIN.y + 238, 58, 42],
+  [ROOMS.CAM_4A_RIGHT_HALL_FAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 184, CCTV_MAP_LAYOUT_ORIGIN.y + 240, 58, 42],
+  [ROOMS.CAM_4B_RIGHT_HALL_NEAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 184, CCTV_MAP_LAYOUT_ORIGIN.y + 286, 58, 42],
+  [ROOMS.CAM_5_BACKSTAGE]: [CCTV_MAP_LAYOUT_ORIGIN.x + 8, CCTV_MAP_LAYOUT_ORIGIN.y + 82, 58, 42],
+  [ROOMS.CAM_6_SERVER_KITCHEN]: [CCTV_MAP_LAYOUT_ORIGIN.x + 246, CCTV_MAP_LAYOUT_ORIGIN.y + 224, 58, 42]
+});
+
+const CAMERA_MAP_LABELS = Object.freeze({
+  [ROOMS.CAM_1A_STAGE]: '1A',
+  [ROOMS.CAM_1B_LOBBY]: '1B',
+  [ROOMS.CAM_1C_CLAUDE_CLOSET]: '1C',
+  [ROOMS.CAM_2A_LEFT_HALL_FAR]: '2A',
+  [ROOMS.CAM_2B_LEFT_HALL_NEAR]: '2B',
+  [ROOMS.CAM_3_SUPPLY_CLOSET]: '3',
+  [ROOMS.CAM_4A_RIGHT_HALL_FAR]: '4A',
+  [ROOMS.CAM_4B_RIGHT_HALL_NEAR]: '4B',
+  [ROOMS.CAM_5_BACKSTAGE]: '5',
+  [ROOMS.CAM_6_SERVER_KITCHEN]: '6'
 });
 
 export function renderGame(ctx, state, assets, now = performance.now()) {
@@ -91,7 +114,7 @@ export function renderGame(ctx, state, assets, now = performance.now()) {
       break;
   }
 
-  drawGlobalToggles(ctx, state);
+  drawScreenNoise(ctx, assets, state, now);
   ctx.restore();
 }
 
@@ -100,12 +123,34 @@ export function getCanvasSize() {
 }
 
 function drawTitle(ctx, state, assets, now) {
-  drawCover(ctx, assets.images.backgrounds.title, 0, 0, W, H);
-  darken(ctx, 0.12 + Math.sin(now / 400) * 0.03);
+  const glitchVisible = (state.titleGlitch?.flashTimer ?? 0) > 0;
+  const titleImage = glitchVisible
+    ? assets.images.backgrounds.titleStare ?? assets.images.backgrounds.title
+    : assets.images.backgrounds.title;
+  drawCover(ctx, titleImage, 0, 0, W, H);
+  darken(ctx, glitchVisible ? 0.04 : 0.12 + Math.sin(now / 400) * 0.03);
+  if (glitchVisible) drawTitleGlitch(ctx, assets, now);
   text(ctx, GAME_TITLE, 640, 118, 46, '#f5fbff', 'center', '900');
   text(ctx, '무료 체험은 끝났고, 결제 인형들이 움직이기 시작했다.', 640, 170, 24, '#b6d5e4', 'center', '700');
   drawButton(ctx, state, 'start', UI_TEXT.start, 500, 500, 280, 58, true);
   drawButton(ctx, state, 'howTo', UI_TEXT.howToPlay, 500, 570, 280, 54);
+}
+
+function drawTitleGlitch(ctx, assets, now) {
+  drawStatic(ctx, assets, 0.32);
+  ctx.save();
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 0.45;
+  ctx.fillStyle = '#9feeff';
+  for (let i = 0; i < 5; i += 1) {
+    const y = (now / 5 + i * 113) % H;
+    const h = 4 + (i % 3) * 3;
+    const xOffset = Math.sin(now / 21 + i) * 30;
+    ctx.fillRect(xOffset - 20, y, W + 40, h);
+  }
+  ctx.restore();
 }
 
 function drawHowTo(ctx, state, assets) {
@@ -117,9 +162,9 @@ function drawHowTo(ctx, state, assets) {
     '5개월 동안 결제하지 않고 버티세요. CCTV로 방을 직접 확인하고, 적이 보이는 카메라를 보고 있으면 Gemini, Grok, ChatGPT는 움직이지 못합니다.',
     'Claude는 커튼방에서 단계적으로 나온 뒤 왼쪽 복도를 질주합니다. 복도에서 보이면 CCTV를 내리고 왼쪽 문을 닫으세요.',
     '문과 라이트와 CCTV는 토큰을 소모합니다. 토큰이 0%가 되면 문, 라이트, CCTV가 모두 실패합니다.',
-    'A/D는 사무실에서 왼쪽/오른쪽 라이트 토글, CCTV에서는 카메라 전환입니다. 지도 박스를 클릭해도 카메라를 바꿀 수 있습니다.',
+    '사무실에서는 화면의 문과 라이트 버튼을 누르고, CCTV에서는 지도 박스를 클릭해 카메라를 바꿀 수 있습니다.',
     '',
-    'C: CCTV   Q/E: 왼쪽/오른쪽 문   A/D: 라이트 또는 카메라 전환   Esc: CCTV 닫기   M: 음소거   R: 모션 줄이기'
+    '원작처럼 플레이는 화면 버튼과 CCTV 지도 클릭만 사용합니다.'
   ], 206, 190, 868, 32, '#dcecf7');
   drawButton(ctx, state, 'exitToTitle', '돌아가기', 500, 584, 280, 52);
 }
@@ -206,26 +251,113 @@ function drawCctvUi(ctx, state) {
   drawPanel(ctx, 32, 26, 410, 86, 0.72);
   text(ctx, CAMERA_LABELS[camera], 54, 62, 24, '#eaf7ff', 'left', '800');
   text(ctx, `REC  ${state.tokens.toFixed(1)}%`, 54, 94, 17, '#ff6f7b', 'left', '800');
-  drawButton(ctx, state, 'prevCamera', '<', 44, 620, 78, 58);
-  drawButton(ctx, state, 'nextCamera', '>', 1158, 620, 78, 58);
-  drawButton(ctx, state, 'toggleCctv', '닫기', 1084, 36, 136, 46);
+  drawButton(ctx, state, 'prevCamera', '<', 402, 638, 78, 48);
+  drawButton(ctx, state, 'toggleCctv', '닫기', 516, 638, 248, 48);
+  drawButton(ctx, state, 'nextCamera', '>', 800, 638, 78, 48);
   drawMiniMap(ctx, state, camera);
-  drawHud(ctx, state, true);
+  drawHud(ctx, state);
 }
 
 function drawMiniMap(ctx, state, selectedCamera) {
-  drawPanel(ctx, 910, 72, 302, 318, 0.72);
-  text(ctx, 'CCTV MAP', 1060, 102, 20, '#eaf7ff', 'center', '800');
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.62)';
+  ctx.strokeStyle = 'rgba(245, 250, 252, 0.86)';
+  ctx.lineWidth = 2;
+  ctx.fillRect(CCTV_MAP_LAYOUT_ORIGIN.x - 20, CCTV_MAP_LAYOUT_ORIGIN.y - 30, 342, 362);
+  ctx.strokeRect(CCTV_MAP_LAYOUT_ORIGIN.x - 20, CCTV_MAP_LAYOUT_ORIGIN.y - 30, 342, 362);
+  drawCctvMapConnections(ctx);
+  drawYouMarker(ctx);
   for (const camera of CAMERAS) {
     const [x, y, w, h] = CCTV_MAP_LAYOUT[camera];
     const selected = camera === selectedCamera;
-    ctx.fillStyle = selected ? 'rgba(60, 215, 255, 0.78)' : 'rgba(9, 21, 34, 0.86)';
-    ctx.strokeStyle = selected ? '#f4fbff' : '#70a9be';
-    ctx.lineWidth = selected ? 2.5 : 1.5;
-    roundedRect(ctx, x, y, w, h, 5, true, true);
-    text(ctx, shortCameraLabel(camera), x + w / 2, y + 23, 12, selected ? '#031018' : '#dbeef7', 'center', '800');
+    drawCctvMapLabel(ctx, camera, x, y, w, h, selected);
     state.ui.push({ id: `camera:${camera}`, label: CAMERA_LABELS[camera], x, y, w, h });
   }
+  ctx.restore();
+}
+
+function drawCctvMapConnections(ctx) {
+  const { x, y } = CCTV_MAP_LAYOUT_ORIGIN;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(245, 250, 252, 0.82)';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'miter';
+  ctx.lineCap = 'square';
+
+  ctx.strokeRect(x + 74, y + 56, 176, 166);
+  ctx.strokeRect(x - 2, y + 74, 60, 120);
+  ctx.strokeRect(x - 2, y + 214, 88, 112);
+  ctx.strokeRect(x + 226, y + 92, 64, 132);
+  ctx.strokeRect(x + 226, y + 224, 76, 70);
+
+  drawMapPath(ctx, [
+    [x + 116, y + 50],
+    [x + 116, y + 56]
+  ]);
+  drawMapPath(ctx, [
+    [x + 74, y + 102],
+    [x + 58, y + 102]
+  ]);
+  drawMapPath(ctx, [
+    [x + 74, y + 172],
+    [x + 58, y + 172],
+    [x + 58, y + 214]
+  ]);
+  drawMapPath(ctx, [
+    [x + 132, y + 222],
+    [x + 132, y + 326]
+  ]);
+  drawMapPath(ctx, [
+    [x + 212, y + 222],
+    [x + 212, y + 326]
+  ]);
+  drawMapPath(ctx, [
+    [x + 244, y + 158],
+    [x + 282, y + 158]
+  ]);
+  drawMapPath(ctx, [
+    [x + 244, y + 254],
+    [x + 276, y + 254]
+  ]);
+  ctx.restore();
+}
+
+function drawMapPath(ctx, points) {
+  ctx.beginPath();
+  points.forEach(([x, y], index) => {
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+function drawCctvMapLabel(ctx, camera, x, y, w, h, selected) {
+  ctx.save();
+  ctx.fillStyle = selected ? 'rgba(238, 244, 246, 0.92)' : 'rgba(18, 18, 18, 0.82)';
+  ctx.strokeStyle = '#f4fbff';
+  ctx.lineWidth = selected ? 3 : 2;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeRect(x, y, w, h);
+  text(ctx, 'CAM', x + 6, y + 17, 14, selected ? '#111' : '#f8fbff', 'left', '900');
+  text(ctx, CAMERA_MAP_LABELS[camera], x + 8, y + 35, 15, selected ? '#111' : '#f8fbff', 'left', '900');
+  ctx.restore();
+}
+
+function drawYouMarker(ctx) {
+  const { x, y } = CCTV_MAP_LAYOUT_ORIGIN;
+  const markerX = x + 145;
+  const markerY = y + 286;
+  const markerSize = 36;
+  ctx.save();
+  ctx.fillStyle = 'rgba(178, 197, 40, 0.92)';
+  ctx.strokeStyle = '#f8fbff';
+  ctx.lineWidth = 2;
+  ctx.fillRect(markerX, markerY, markerSize, markerSize);
+  ctx.strokeRect(markerX, markerY, markerSize, markerSize);
+  text(ctx, 'YOU', markerX + markerSize / 2, markerY + 16, 12, '#f8fbff', 'center', '900');
+  ctx.fillStyle = '#f8fbff';
+  ctx.fillRect(markerX + 14, markerY + 24, 8, 8);
+  ctx.restore();
 }
 
 function drawMonthClear(ctx, state, assets) {
@@ -300,35 +432,67 @@ function drawFinalClear(ctx, state, assets) {
   drawButton(ctx, state, 'exitToTitle', UI_TEXT.exit, 655, 614, 170, 52);
 }
 
-function drawHud(ctx, state, compact = false) {
+function drawHud(ctx, state) {
+  drawTopRightTime(ctx, state);
+  drawBottomLeftTokenPanel(ctx, state);
+}
+
+function drawTopRightTime(ctx, state) {
   const labels = getRuntimeLabels(state);
-  drawPanel(ctx, 28, compact ? 116 : 28, compact ? 392 : 432, compact ? 92 : 112, 0.7);
-  text(ctx, labels.month, 52, compact ? 150 : 62, 24, '#f4fbff', 'left', '800');
-  text(ctx, labels.phase, 176, compact ? 150 : 62, 22, '#cfe9f7', 'left', '700');
-  text(ctx, `남은 토큰 ${labels.tokens}`, 52, compact ? 184 : 100, 21, '#ffe089', 'left', '800');
-  drawTokenGauge(ctx, compact ? 242 : 282, compact ? 168 : 84, state.tokens);
+  drawPanel(ctx, 1056, 24, 176, 82, 0.62);
+  text(ctx, labels.phase, 1212, 60, 30, '#f4fbff', 'right', '900');
+  text(ctx, labels.month, 1212, 90, 20, '#d3ecf7', 'right', '800');
+}
+
+function drawBottomLeftTokenPanel(ctx, state) {
+  const labels = getRuntimeLabels(state);
+  drawPanel(ctx, 32, 574, 302, 120, 0.66);
+  text(ctx, '남은 전력', 54, 612, 21, '#d9edf7', 'left', '800');
+  text(ctx, labels.tokens, 206, 612, 30, '#f6fbff', 'left', '900');
+  drawTokenGauge(ctx, 54, 626, state.tokens);
+  text(ctx, '사용량', 54, 672, 19, '#d9edf7', 'left', '800');
+  drawUsageBars(ctx, getUsageBarsForRender(state));
+}
+
+function getUsageBarsForRender(state) {
+  const activeDoors = Number(state.doors.leftClosed) + Number(state.doors.rightClosed);
+  const activeLights = Number(state.lights.leftOn) + Number(state.lights.rightOn);
+  const activeCctv = state.screen === STATES.CCTV || state.cameraOpen ? 1 : 0;
+  return Math.min(5, 1 + activeDoors + activeLights + activeCctv);
+}
+
+function drawUsageBars(ctx, usage) {
+  for (let index = 0; index < 5; index += 1) {
+    const x = 132 + index * 28;
+    const active = index < usage;
+    ctx.fillStyle = active
+      ? index < 2
+        ? '#7ee6a2'
+        : index < 4
+          ? '#ffd35c'
+          : '#ff7180'
+      : 'rgba(72, 96, 108, 0.72)';
+    ctx.strokeStyle = 'rgba(218, 237, 247, 0.62)';
+    ctx.lineWidth = 1.5;
+    roundedRect(ctx, x, 654, 18, 24, 3, true, true);
+  }
 }
 
 function drawTokenGauge(ctx, x, y, tokens) {
-  const width = 154;
+  const width = 244;
   const color = tokens < 18 ? '#f5e2e6' : tokens < 38 ? '#ffcc69' : '#75e3a1';
   ctx.strokeStyle = '#d8edf7';
   ctx.lineWidth = 2;
-  roundedRect(ctx, x, y, width, 20, 4, false, true);
+  roundedRect(ctx, x, y, width, 18, 4, false, true);
   ctx.fillStyle = color;
-  roundedRect(ctx, x + 3, y + 3, Math.max(2, (width - 6) * (tokens / 100)), 14, 3, true, false);
+  roundedRect(ctx, x + 3, y + 3, Math.max(2, (width - 6) * (tokens / 100)), 12, 3, true, false);
 }
 
 function drawDoorAndLightControls(ctx, state) {
-  drawButton(ctx, state, 'leftDoor', state.doors.leftClosed ? '왼쪽 문 닫힘' : UI_TEXT.leftDoor, 44, 616, 190, 44, state.doors.leftClosed);
-  drawButton(ctx, state, 'leftLight', state.lights.leftOn ? '왼쪽 라이트 켜짐' : UI_TEXT.leftLight, 44, 664, 190, 44, state.lights.leftOn);
-  drawButton(ctx, state, 'rightDoor', state.doors.rightClosed ? '오른쪽 문 닫힘' : UI_TEXT.rightDoor, 1046, 616, 190, 44, state.doors.rightClosed);
-  drawButton(ctx, state, 'rightLight', state.lights.rightOn ? '오른쪽 라이트 켜짐' : UI_TEXT.rightLight, 1046, 664, 190, 44, state.lights.rightOn);
-}
-
-function drawGlobalToggles(ctx, state) {
-  drawButton(ctx, state, 'mute', state.muted ? '음소거 ON' : '음소거', 1000, 590, 116, 38, state.muted);
-  drawButton(ctx, state, 'motion', state.reduceMotion ? '모션 줄임' : '모션', 1124, 590, 96, 38, state.reduceMotion);
+  drawButton(ctx, state, 'leftDoor', state.doors.leftClosed ? '왼쪽 문 닫힘' : UI_TEXT.leftDoor, 44, 456, 190, 44, state.doors.leftClosed);
+  drawButton(ctx, state, 'leftLight', state.lights.leftOn ? '왼쪽 라이트 켜짐' : UI_TEXT.leftLight, 44, 508, 190, 44, state.lights.leftOn);
+  drawButton(ctx, state, 'rightDoor', state.doors.rightClosed ? '오른쪽 문 닫힘' : UI_TEXT.rightDoor, 1046, 456, 190, 44, state.doors.rightClosed);
+  drawButton(ctx, state, 'rightLight', state.lights.rightOn ? '오른쪽 라이트 켜짐' : UI_TEXT.rightLight, 1046, 508, 190, 44, state.lights.rightOn);
 }
 
 function selectOfficeBackground(state, assets) {
@@ -452,6 +616,27 @@ export function drawSpriteAtPivot(ctx, image, worldX, worldY, pivotX, pivotY, sc
   ctx.restore();
 }
 
+function drawScreenNoise(ctx, assets, state, now) {
+  const image = assets.images.effects.staticNoise;
+  if (!image) return;
+  const staticLevel = (state.screen === STATES.CCTV ? 0.035 : 0.018) + Math.min(0.16, state.staticBurst * 0.12);
+  drawStatic(ctx, assets, staticLevel);
+
+  ctx.save();
+  const scanlineDrift = Math.floor(now / 24) % 4;
+  ctx.fillStyle = '#d9f3ff';
+  ctx.globalAlpha = (state.screen === STATES.TITLE ? 0.075 : 0.048) + (state.reduceMotion ? 0 : Math.sin(now / 90) * 0.008);
+  for (let y = scanlineDrift; y < H; y += 4) {
+    ctx.fillRect(0, y, W, 1);
+  }
+  ctx.fillStyle = '#000000';
+  ctx.globalAlpha = state.screen === STATES.CCTV ? 0.08 : 0.045;
+  for (let y = 2; y < H; y += 4) {
+    ctx.fillRect(0, y, W, 1);
+  }
+  ctx.restore();
+}
+
 function drawStatic(ctx, assets, intensity) {
   if (intensity <= 0) return;
   const image = assets.images.effects.staticNoise;
@@ -547,17 +732,4 @@ function roundedRect(ctx, x, y, w, h, r, fill, stroke) {
   ctx.closePath();
   if (fill) ctx.fill();
   if (stroke) ctx.stroke();
-}
-
-function shortCameraLabel(camera) {
-  return camera
-    .replace('CAM_', '')
-    .replace('_STAGE', 'A')
-    .replace('_LOBBY', 'B')
-    .replace('_CLAUDE_CLOSET', 'C')
-    .replace('_LEFT_HALL_FAR', 'L FAR')
-    .replace('_LEFT_HALL_NEAR', 'L DOOR')
-    .replace('_RIGHT_HALL_FAR', 'R FAR')
-    .replace('_RIGHT_HALL_NEAR', 'R DOOR')
-    .replace('_SERVER_KITCHEN', 'SERVER');
 }
