@@ -179,6 +179,10 @@ function drawOffice(ctx, state, assets, now) {
   drawCover(ctx, bg, -8, 0, W + 16, H);
   ctx.restore();
 
+  if (!state.stats.tokenOut && state.lights.leftOn && state.lights.rightOn) {
+    drawOfficeLightLayers(ctx, state, assets, sway);
+  }
+
   if (state.doors.leftClosed) {
     ctx.globalAlpha = 0.72;
     drawCover(ctx, assets.images.backgrounds.leftDoorClosed, 0, 0, W, H);
@@ -496,6 +500,7 @@ function drawDoorAndLightControls(ctx, state) {
 }
 
 function selectOfficeBackground(state, assets) {
+  if (state.lights.leftOn && state.lights.rightOn) return assets.images.backgrounds.office;
   if (state.lights.leftOn) {
     return state.visibleDoorThreats.left.length
       ? assets.images.backgrounds.leftLightGemini
@@ -508,6 +513,42 @@ function selectOfficeBackground(state, assets) {
     return assets.images.backgrounds.rightLightEmpty;
   }
   return assets.images.backgrounds.office;
+}
+
+function drawOfficeLightLayers(ctx, state, assets, sway) {
+  if (state.lights.leftOn) {
+    drawClippedOfficeLayer(ctx, selectLeftLightLayer(state, assets), 'left', sway);
+  }
+  if (state.lights.rightOn) {
+    drawClippedOfficeLayer(ctx, selectRightLightLayer(state, assets), 'right', sway);
+  }
+}
+
+function selectLeftLightLayer(state, assets) {
+  return state.visibleDoorThreats.left.length
+    ? assets.images.backgrounds.leftLightGemini
+    : assets.images.backgrounds.leftLightEmpty;
+}
+
+function selectRightLightLayer(state, assets) {
+  const threat = state.visibleDoorThreats.right[0];
+  if (threat?.id === 'chatgpt') return assets.images.backgrounds.rightLightChatgpt;
+  if (threat?.id === 'grok') return assets.images.backgrounds.rightLightGrok;
+  return assets.images.backgrounds.rightLightEmpty;
+}
+
+function drawClippedOfficeLayer(ctx, image, side, sway) {
+  if (!image) return;
+  const overlap = 76;
+  const x = side === 'left' ? 0 : W / 2 - overlap;
+  const width = W / 2 + overlap;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, 0, width, H);
+  ctx.clip();
+  ctx.translate(sway, 0);
+  drawCover(ctx, image, -8, 0, W + 16, H);
+  ctx.restore();
 }
 
 function drawDoorThreats(ctx, state, assets) {
@@ -562,12 +603,18 @@ function getOccupiedCameraPlate(state, assets, camera) {
 function drawLightCone(ctx, state) {
   ctx.save();
   ctx.globalAlpha = 0.22;
-  const gradient = ctx.createRadialGradient(state.lights.leftOn ? 200 : 1080, 390, 20, state.lights.leftOn ? 270 : 1010, 420, 420);
+  if (state.lights.leftOn) drawOfficeLightGradient(ctx, 'left');
+  if (state.lights.rightOn) drawOfficeLightGradient(ctx, 'right');
+  ctx.restore();
+}
+
+function drawOfficeLightGradient(ctx, side) {
+  const left = side === 'left';
+  const gradient = ctx.createRadialGradient(left ? 200 : 1080, 390, 20, left ? 270 : 1010, 420, 420);
   gradient.addColorStop(0, '#f8f0c8');
   gradient.addColorStop(1, 'rgba(248, 240, 200, 0)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, W, H);
-  ctx.restore();
 }
 
 function drawPaywall(ctx, assets, timer) {

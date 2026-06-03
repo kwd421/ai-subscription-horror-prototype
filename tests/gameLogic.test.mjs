@@ -133,6 +133,45 @@ test('HUD source follows original-style time, token, and usage placement', async
   assert.doesNotMatch(renderSource, /id, label: labelText, x: 1000, y: 590/);
 });
 
+test('office light renderer draws left and right beams independently', async () => {
+  const renderSource = await readFile('src/game/render.js', 'utf8');
+  const officeStart = renderSource.indexOf('function drawOffice');
+  const officeEnd = renderSource.indexOf('function drawCctv', officeStart);
+  const officeSource = renderSource.slice(officeStart, officeEnd);
+  const backgroundStart = renderSource.indexOf('function selectOfficeBackground');
+  const backgroundEnd = renderSource.indexOf('function drawOfficeLightLayers', backgroundStart);
+  const backgroundSource = renderSource.slice(backgroundStart, backgroundEnd);
+  const layersStart = renderSource.indexOf('function drawOfficeLightLayers');
+  const layersEnd = renderSource.indexOf('function drawDoorThreats', layersStart);
+  const layersSource = renderSource.slice(layersStart, layersEnd);
+  const lightStart = renderSource.indexOf('function drawLightCone');
+  const lightEnd = renderSource.indexOf('function drawPaywall', lightStart);
+  const lightSource = renderSource.slice(lightStart, lightEnd);
+
+  assert.match(officeSource, /state\.lights\.leftOn && state\.lights\.rightOn/);
+  assert.match(officeSource, /drawOfficeLightLayers\(ctx, state, assets, sway\)/);
+  assert.match(backgroundSource, /state\.lights\.leftOn && state\.lights\.rightOn\) return assets\.images\.backgrounds\.office/);
+  assert.match(backgroundSource, /assets\.images\.backgrounds\.leftLightGemini/);
+  assert.match(backgroundSource, /assets\.images\.backgrounds\.rightLightChatgpt/);
+  assert.match(backgroundSource, /assets\.images\.backgrounds\.rightLightGrok/);
+  assert.match(layersSource, /if \(state\.lights\.leftOn\)/);
+  assert.match(layersSource, /drawClippedOfficeLayer\(ctx, selectLeftLightLayer\(state, assets\), 'left', sway\)/);
+  assert.match(layersSource, /if \(state\.lights\.rightOn\)/);
+  assert.match(layersSource, /drawClippedOfficeLayer\(ctx, selectRightLightLayer\(state, assets\), 'right', sway\)/);
+  assert.match(layersSource, /function drawClippedOfficeLayer/);
+  assert.match(layersSource, /ctx\.clip\(\)/);
+  assert.match(layersSource, /ctx\.translate\(sway, 0\)/);
+  assert.match(layersSource, /drawCover\(ctx, image, -8, 0, W \+ 16, H\)/);
+  assert.doesNotMatch(layersSource, /globalAlpha = 0\.96/);
+  assert.notEqual(lightStart, -1);
+  assert.notEqual(lightEnd, -1);
+  assert.match(lightSource, /ctx\.globalAlpha = 0\.22/);
+  assert.match(lightSource, /if \(state\.lights\.leftOn\) drawOfficeLightGradient\(ctx, 'left'\)/);
+  assert.match(lightSource, /if \(state\.lights\.rightOn\) drawOfficeLightGradient\(ctx, 'right'\)/);
+  assert.match(lightSource, /left \? 200 : 1080/);
+  assert.match(lightSource, /gradient\.addColorStop\(0, '#f8f0c8'\)/);
+});
+
 test('renderer keeps global screen noise and the title easter egg path wired', async () => {
   const renderSource = await readFile('src/game/render.js', 'utf8');
   const titleStart = renderSource.indexOf('function drawTitle');
