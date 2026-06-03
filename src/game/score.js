@@ -1,33 +1,28 @@
-export function calculateNightScore({
-  currentNight,
-  remainingPower,
-  successfulDoorBlocks,
-  cameraUseSeconds,
-  doorClosedSeconds
-}) {
-  return (
-    currentNight * 1000 +
-    Math.floor(remainingPower * 35) +
-    successfulDoorBlocks * 150 +
-    Math.max(0, 500 - Math.floor(cameraUseSeconds * 3)) +
-    Math.max(0, 500 - Math.floor(doorClosedSeconds * 2))
-  );
+export function roundTenth(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 10) / 10;
 }
 
-export function calculatePartialScore({
-  completedNights,
-  survivedTimeRatio,
-  remainingPower,
-  successfulDoorBlocks
+export function calculateMonthTokenScore(tokens) {
+  return roundTenth(Math.max(0, Math.min(100, tokens)));
+}
+
+export function calculateGameOverTokenScore({
+  clearedTokenResults,
+  failedMonthTokens,
+  survivedRatio
 }) {
-  return (
-    completedNights * 1000 +
-    Math.floor(survivedTimeRatio * 800) +
-    Math.floor(remainingPower * 10) +
-    successfulDoorBlocks * 75
+  const safeCleared = clearedTokenResults.filter((score) => Number.isFinite(score));
+  const partialFailedMonthScore = roundTenth(
+    Math.max(0, Math.min(100, failedMonthTokens)) * Math.max(0, Math.min(1, survivedRatio))
   );
+  const finalScore = roundTenth(sumScores(safeCleared) + partialFailedMonthScore);
+  return { partialFailedMonthScore, finalScore };
+}
+
+export function calculateFinalTokenScore(stageTokenResults) {
+  return roundTenth(sumScores(stageTokenResults.filter((score) => Number.isFinite(score))));
 }
 
 export function sumScores(scores) {
-  return scores.reduce((total, score) => total + score, 0);
+  return roundTenth(scores.reduce((total, score) => total + score, 0));
 }

@@ -6,10 +6,12 @@ import {
   advanceAfterClear,
   closeCamera,
   createInitialState,
+  selectCamera,
   startRun,
   switchCamera,
   toggleCamera,
   toggleDoor,
+  toggleLight,
   updateState
 } from './game/state.js';
 
@@ -93,7 +95,7 @@ function handleCanvasInput(event) {
 window.addEventListener('keydown', (event) => {
   void safeAudioUnlock();
   const key = event.key.toLowerCase();
-  if (['arrowleft', 'arrowright', ' ', 'enter', 'c', 'q', 'e', 'escape'].includes(key)) {
+  if (['arrowleft', 'arrowright', ' ', 'enter', 'c', 'q', 'e', 'escape', 'a', 'd'].includes(key)) {
     event.preventDefault();
   }
   if (key === 'enter' || key === ' ') {
@@ -107,8 +109,16 @@ window.addEventListener('keydown', (event) => {
     if (state.screen === STATES.CCTV) closeCamera(state);
     else if (state.screen === STATES.HOW_TO_PLAY) state.screen = STATES.TITLE;
   }
-  if (key === 'arrowleft' || key === 'a') performAction('prevCamera');
-  if (key === 'arrowright' || key === 'd') performAction('nextCamera');
+  if (key === 'arrowleft') performAction('prevCamera');
+  if (key === 'arrowright') performAction('nextCamera');
+  if (key === 'a') {
+    if (state.screen === STATES.CCTV) performAction('prevCamera');
+    else performAction('leftLight');
+  }
+  if (key === 'd') {
+    if (state.screen === STATES.CCTV) performAction('nextCamera');
+    else performAction('rightLight');
+  }
   if (key === 'q') performAction('leftDoor');
   if (key === 'e') performAction('rightDoor');
   if (key === 'm') performAction('mute');
@@ -124,6 +134,12 @@ uiLayer.addEventListener('click', (event) => {
 });
 
 function performAction(action) {
+  if (action.startsWith('camera:')) {
+    if (selectCamera(state, action.slice('camera:'.length))) audio.staticBurst(0.08, 0.03);
+    if (testMode) renderStaticFrame();
+    return;
+  }
+
   switch (action) {
     case 'start':
     case 'retry':
@@ -156,6 +172,12 @@ function performAction(action) {
       break;
     case 'rightDoor':
       if (toggleDoor(state, 'right')) audio.thud();
+      break;
+    case 'leftLight':
+      if (toggleLight(state, 'left')) audio.click();
+      break;
+    case 'rightLight':
+      if (toggleLight(state, 'right')) audio.click();
       break;
     case 'mute':
       state.muted = !state.muted;

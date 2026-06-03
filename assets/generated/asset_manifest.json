@@ -2,35 +2,50 @@
   "title": "저는 결제하라고 나오면 닫아버립니다",
   "assetRoot": "assets/generated/",
   "policy": {
-    "visualSource": "Codex built-in image generation with local bitmap post-processing for Korean title text and fixed-canvas sprite transparency",
+    "visualSource": "Codex built-in image generation; FNAF1 references were used for composition only, then adapted into original AI subscription parody PNG assets",
     "noSvg": true,
     "noExternalImages": true,
-    "noRealLogos": true
+    "noCopiedOfficialLogos": true,
+    "parodyServiceMarksAllowed": true
   },
   "backgrounds": {
-    "title": "title_screen.png",
-    "office": "office_main.png",
-    "leftDoorClosed": "office_left_door_closed.png",
-    "rightDoorClosed": "office_right_door_closed.png",
-    "powerout": "office_powerout.png",
-    "monitorFrame": "monitor_frame.png",
-    "gameOver": "gameover_bg.png",
-    "clear": "clear_bg.png"
+    "title": "title_screen_month.png",
+    "office": "office_main_month.png",
+    "leftLightEmpty": "office_left_light_empty.png",
+    "rightLightEmpty": "office_right_light_empty.png",
+    "leftLightGemini": "office_left_light_gemini_peek.png",
+    "rightLightGrok": "office_right_light_grok_peek.png",
+    "rightLightChatgpt": "office_right_light_chatgpt_peek.png",
+    "leftDoorClosed": "office_left_door_closed_month.png",
+    "rightDoorClosed": "office_right_door_closed_month.png",
+    "powerout": "office_powerout_tokens_empty.png",
+    "monitorFrame": "monitor_frame_crt.png",
+    "invoice": "invoice_bg.png",
+    "clear": "clear_bg_ssalmeok_god.png"
   },
   "cameras": {
-    "STAGE": "cam_stage.png",
-    "LOBBY": "cam_lobby.png",
-    "SERVER": "cam_server.png",
-    "STORAGE": "cam_storage.png",
-    "LEFT_HALL_FAR": "cam_left_hall_far.png",
-    "LEFT_HALL_NEAR": "cam_left_hall_near.png",
-    "RIGHT_HALL_FAR": "cam_right_hall_far.png",
-    "RIGHT_HALL_NEAR": "cam_right_hall_near.png"
+    "CAM_1A_STAGE": "cam_1a_stage_close_faces.png",
+    "stageChatgptOnly": "cam_1a_stage_chatgpt_only.png",
+    "stageMissingGemini": "cam_1a_stage_missing_gemini.png",
+    "stageMissingGrok": "cam_1a_stage_missing_grok.png",
+    "stageMissingClaude": "cam_1a_stage_missing_claude.png",
+    "stageEmpty": "cam_1a_stage_empty.png",
+    "CAM_1B_LOBBY": "cam_1b_lobby_paywall.png",
+    "CAM_1C_CLAUDE_CLOSET": "cam_1c_claude_closet_stage0.png",
+    "claudeClosetStage0": "cam_1c_claude_closet_stage0.png",
+    "claudeClosetStage1": "cam_1c_claude_closet_stage1.png",
+    "claudeClosetStage2": "cam_1c_claude_closet_stage2.png",
+    "claudeClosetEmpty": "cam_1c_claude_closet_empty.png",
+    "CAM_2A_LEFT_HALL_FAR": "cam_2a_left_hall_far.png",
+    "CAM_2B_LEFT_HALL_NEAR": "cam_2b_left_hall_near.png",
+    "CAM_4A_RIGHT_HALL_FAR": "cam_4a_right_hall_far.png",
+    "CAM_4B_RIGHT_HALL_NEAR": "cam_4b_right_hall_near.png",
+    "CAM_6_SERVER_KITCHEN": "cam_6_server_kitchen.png"
   },
   "effects": {
-    "staticNoise": "static_noise_tile.png",
+    "staticNoise": "static_overlay.png",
     "warningVignette": "warning_vignette.png",
-    "paywallPopup": "paywall_popup.png"
+    "paywallPopup": "paywall_popup_generated.png"
   },
   "spriteDefaults": {
     "width": 512,
@@ -45,11 +60,12 @@
       "pivotX": 256,
       "pivotY": 450,
       "poses": {
-        "idle": "gemini_idle.png",
-        "sneaking": "gemini_sneaking.png",
-        "near_door": "gemini_near_door.png",
-        "running": "gemini_running.png",
-        "jumpscare": "gemini_jumpscare.png"
+        "idle_close": "gemini_idle_close.png",
+        "hallway_far": "gemini_hallway_far.png",
+        "hallway_near": "gemini_hallway_near.png",
+        "door_peek": "gemini_door_peek.png",
+        "camera_stare": "gemini_camera_stare.png",
+        "jumpscare": "jumpscare_gemini.png"
       }
     },
     "grok": {
@@ -57,11 +73,12 @@
       "pivotX": 256,
       "pivotY": 450,
       "poses": {
-        "idle": "grok_idle.png",
-        "sneaking": "grok_sneaking.png",
-        "near_door": "grok_near_door.png",
-        "running": "grok_running.png",
-        "jumpscare": "grok_jumpscare.png"
+        "idle_close": "grok_idle_close.png",
+        "hallway_far": "grok_hallway_far.png",
+        "hallway_near": "grok_hallway_near.png",
+        "door_peek": "grok_door_peek.png",
+        "camera_stare": "grok_camera_stare.png",
+        "jumpscare": "jumpscare_grok.png"
       }
     },
     "chatgpt": {
@@ -69,11 +86,12 @@
       "pivotX": 256,
       "pivotY": 450,
       "poses": {
-        "idle": "chatgpt_idle.png",
-        "sneaking": "chatgpt_sneaking.png",
-        "near_door": "chatgpt_near_door.png",
-        "running": "chatgpt_running.png",
-        "jumpscare": "chatgpt_jumpscare.png"
+        "idle_close": "chatgpt_idle_close.png",
+        "hallway_far": "chatgpt_hallway_far.png",
+        "hallway_near": "chatgpt_hallway_near.png",
+        "door_peek": "chatgpt_door_peek.png",
+        "camera_stare": "chatgpt_camera_stare.png",
+        "jumpscare": "jumpscare_chatgpt.png"
       }
     },
     "claude": {
@@ -81,11 +99,15 @@
       "pivotX": 256,
       "pivotY": 450,
       "poses": {
-        "idle": "claude_idle.png",
-        "sneaking": "claude_sneaking.png",
-        "near_door": "claude_near_door.png",
-        "running": "claude_running.png",
-        "jumpscare": "claude_jumpscare.png"
+        "closet_peek1": "claude_closet_peek1.png",
+        "closet_peek2": "claude_closet_peek2.png",
+        "closet_out": "claude_closet_out.png",
+        "sprint_01": "claude_sprint_01.png",
+        "sprint_02": "claude_sprint_02.png",
+        "sprint_03": "claude_sprint_03.png",
+        "sprint_04": "claude_sprint_04.png",
+        "door_bang": "claude_door_bang.png",
+        "jumpscare": "jumpscare_claude.png"
       }
     }
   }

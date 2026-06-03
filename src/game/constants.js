@@ -1,47 +1,57 @@
 export const GAME_TITLE = '저는 결제하라고 나오면 닫아버립니다';
-export const NIGHT_LENGTH_SECONDS = 90;
-export const HOURS_PER_NIGHT = 6;
-export const ATTACK_WINDOWS = Object.freeze({
-  1: 2.4,
-  2: 2.1,
-  3: 1.8,
-  4: 1.5,
-  5: 1.25
-});
+export const MONTH_LENGTH_SECONDS = 90;
+export const MONTH_COUNT = 5;
+
+export const MONTH_PHASES = Object.freeze([
+  '월초',
+  '1주차',
+  '2주차',
+  '3주차',
+  '4주차',
+  '월말 직전'
+]);
 
 export const ROOMS = Object.freeze({
-  STAGE: 'STAGE',
-  LOBBY: 'LOBBY',
-  SERVER: 'SERVER',
-  STORAGE: 'STORAGE',
-  LEFT_HALL_FAR: 'LEFT_HALL_FAR',
-  LEFT_HALL_NEAR: 'LEFT_HALL_NEAR',
-  RIGHT_HALL_FAR: 'RIGHT_HALL_FAR',
-  RIGHT_HALL_NEAR: 'RIGHT_HALL_NEAR',
-  OFFICE_LEFT_ATTACK: 'OFFICE_LEFT_ATTACK',
-  OFFICE_RIGHT_ATTACK: 'OFFICE_RIGHT_ATTACK'
+  CAM_1A_STAGE: 'CAM_1A_STAGE',
+  CAM_1B_LOBBY: 'CAM_1B_LOBBY',
+  CAM_1C_CLAUDE_CLOSET: 'CAM_1C_CLAUDE_CLOSET',
+  CAM_2A_LEFT_HALL_FAR: 'CAM_2A_LEFT_HALL_FAR',
+  CAM_2B_LEFT_HALL_NEAR: 'CAM_2B_LEFT_HALL_NEAR',
+  CAM_4A_RIGHT_HALL_FAR: 'CAM_4A_RIGHT_HALL_FAR',
+  CAM_4B_RIGHT_HALL_NEAR: 'CAM_4B_RIGHT_HALL_NEAR',
+  CAM_6_SERVER_KITCHEN: 'CAM_6_SERVER_KITCHEN',
+  LEFT_DOOR: 'LEFT_DOOR',
+  RIGHT_DOOR: 'RIGHT_DOOR'
 });
 
 export const CAMERAS = Object.freeze([
-  'STAGE',
-  'LOBBY',
-  'SERVER',
-  'STORAGE',
-  'LEFT_HALL_FAR',
-  'LEFT_HALL_NEAR',
-  'RIGHT_HALL_FAR',
-  'RIGHT_HALL_NEAR'
+  ROOMS.CAM_1A_STAGE,
+  ROOMS.CAM_1B_LOBBY,
+  ROOMS.CAM_1C_CLAUDE_CLOSET,
+  ROOMS.CAM_2A_LEFT_HALL_FAR,
+  ROOMS.CAM_2B_LEFT_HALL_NEAR,
+  ROOMS.CAM_4A_RIGHT_HALL_FAR,
+  ROOMS.CAM_4B_RIGHT_HALL_NEAR,
+  ROOMS.CAM_6_SERVER_KITCHEN
 ]);
 
 export const CAMERA_LABELS = Object.freeze({
-  STAGE: 'CAM 01 / 시작실',
-  LOBBY: 'CAM 02 / 결제 키오스크',
-  SERVER: 'CAM 03 / 서버 복도',
-  STORAGE: 'CAM 04 / 보관실',
-  LEFT_HALL_FAR: 'CAM 05 / 왼쪽 먼 복도',
-  LEFT_HALL_NEAR: 'CAM 06 / 왼쪽 문 앞',
-  RIGHT_HALL_FAR: 'CAM 07 / 오른쪽 먼 복도',
-  RIGHT_HALL_NEAR: 'CAM 08 / 오른쪽 문 앞'
+  [ROOMS.CAM_1A_STAGE]: 'CAM 1A: 무료 체험 무대',
+  [ROOMS.CAM_1B_LOBBY]: 'CAM 1B: 결제 대기실',
+  [ROOMS.CAM_1C_CLAUDE_CLOSET]: 'CAM 1C: 무료 체험 커튼',
+  [ROOMS.CAM_2A_LEFT_HALL_FAR]: 'CAM 2A: 왼쪽 복도',
+  [ROOMS.CAM_2B_LEFT_HALL_NEAR]: 'CAM 2B: 왼쪽 문 앞',
+  [ROOMS.CAM_4A_RIGHT_HALL_FAR]: 'CAM 4A: 오른쪽 복도',
+  [ROOMS.CAM_4B_RIGHT_HALL_NEAR]: 'CAM 4B: 오른쪽 문 앞',
+  [ROOMS.CAM_6_SERVER_KITCHEN]: 'CAM 6: 서버실'
+});
+
+export const INVOICE_PLANS = Object.freeze({
+  gemini: 'Google AI Ultra $249.99',
+  grok: 'Grok Heavy $300',
+  chatgpt: 'ChatGPT Pro $200',
+  claude: 'Claude Max $200',
+  tokenOut: '토큰 소진'
 });
 
 export const UI_TEXT = Object.freeze({
@@ -49,28 +59,38 @@ export const UI_TEXT = Object.freeze({
   howToPlay: '조작법',
   retry: '다시하기',
   exit: '나가기',
-  nextNight: '다음 밤',
-  power: '전력',
-  score: '점수',
+  nextStage: '다음 스테이지',
+  monthClear: '이번달도 무사히 넘겼다. 역시 무료가 최고야.',
+  monthEnd: '월말 정산 완료',
+  token: '남은 토큰',
   leftDoor: '왼쪽 문',
   rightDoor: '오른쪽 문',
-  warning: '내놔!!!!',
-  cctv: 'CCTV'
+  leftLight: '왼쪽 라이트',
+  rightLight: '오른쪽 라이트',
+  cctv: 'CCTV',
+  warning: '돈내!!!!',
+  gameOver: '결제해버렸다...',
+  finalClearTitle: '쌀먹의 신',
+  finalClearBody: '5개월 동안 단 한 번도 결제하지 않았습니다.'
 });
 
-export function getClockLabel(elapsedSeconds) {
-  if (elapsedSeconds >= NIGHT_LENGTH_SECONDS) return '6 AM';
-  const hourIndex = Math.max(
-    0,
-    Math.min(HOURS_PER_NIGHT - 1, Math.floor(elapsedSeconds / (NIGHT_LENGTH_SECONDS / HOURS_PER_NIGHT)))
-  );
-  return hourIndex === 0 ? '12 AM' : `${hourIndex} AM`;
+export function getMonthLabel(month) {
+  return `${month}개월차`;
 }
 
-export function getNightLabel(night) {
-  return `${night}일차`;
+export function getPhaseIndex(elapsedSeconds) {
+  if (elapsedSeconds >= MONTH_LENGTH_SECONDS) return MONTH_PHASES.length - 1;
+  const phaseLength = MONTH_LENGTH_SECONDS / MONTH_PHASES.length;
+  return Math.max(0, Math.min(MONTH_PHASES.length - 1, Math.floor(elapsedSeconds / phaseLength)));
 }
 
-export function getAttackWindow(night) {
-  return ATTACK_WINDOWS[Math.max(1, Math.min(5, night))];
+export function getPhaseLabel(elapsedSecondsOrIndex) {
+  const index = Number.isInteger(elapsedSecondsOrIndex)
+    ? elapsedSecondsOrIndex
+    : getPhaseIndex(elapsedSecondsOrIndex);
+  return MONTH_PHASES[Math.max(0, Math.min(MONTH_PHASES.length - 1, index))];
+}
+
+export function getProgressRatio(elapsedSeconds) {
+  return Math.max(0, Math.min(1, elapsedSeconds / MONTH_LENGTH_SECONDS));
 }

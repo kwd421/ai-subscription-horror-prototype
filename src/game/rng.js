@@ -35,3 +35,11 @@ export function createSeededRng(seed) {
     }
   };
 }
+
+export function createRuntimeRng() {
+  const cryptoObject = globalThis.crypto;
+  const seed = cryptoObject?.getRandomValues
+    ? Array.from(cryptoObject.getRandomValues(new Uint32Array(4))).join('-')
+    : `${Date.now()}-${Math.random()}-${performance?.now?.() ?? 0}`;
+  return createSeededRng(seed);
+}

@@ -1,514 +1,876 @@
-/goal Build a complete playable browser horror-survival fan-game prototype titled "저는 결제하라고 나오면 닫아버립니다".
+/goal Refactor and upgrade the existing browser game repository "ai-subscription-horror-prototype" into a much scarier, more faithful, more randomized CCTV survival horror game while keeping it fully playable and buildable.
 
-You must fully implement the game, generate all visual image assets with Codex image generation, and stop only when the game is playable from title screen to either game over or 5-night clear with final score shown.
+This is a second-pass one-shot competition repair goal. The existing prototype works, but it has design problems. Fix them completely in this goal. Do not make a tiny partial patch. Do not leave TODOs for required gameplay. Keep working until the game is playable from title to game over or full 5-month clear, with final token score output.
 
-This is a one-shot competition build. Do not make a minimal placeholder and stop. Do not split obvious work into tiny follow-up tasks. Keep working inside this goal until the game is complete, polished, tested, and runnable.
+Repository context:
+- Existing repo title: "저는 결제하라고 나오면 닫아버립니다"
+- Existing structure likely includes src/game/assets.js, audio.js, constants.js, enemies.js, render.js, rng.js, score.js, state.js.
+- Preserve the simple browser game setup, local generated assets, procedural WebAudio, no external assets, no SVG.
+- You may reorganize modules if needed, but keep npm run dev, npm run build, and npm test working.
+- Existing gameplay must be replaced or upgraded where it conflicts with the requirements below.
 
-========================
-HIGH-LEVEL GAME CONCEPT
-========================
+==================================================
+ABSOLUTE DESIGN CHANGES FROM CURRENT PROTOTYPE
+==================================================
 
-Create a first-person CCTV survival horror game inspired by classic office-camera-door-power horror gameplay, but with original parody characters and original generated art.
+Fix these exact problems:
 
-Game title:
+1. Enemy patterns must NOT be fixed.
+   Current problem: on month 1, enemies appear to always approach the same side.
+   New requirement: enemy behavior must use randomized AI action opportunities inspired by FNAF-style logic. Every run of the same month should feel different. Month 1 must still be easy, but it must not always send both active enemies left.
+
+2. Enemies must NOT move while the player is watching their current CCTV room.
+   If the player has CCTV open and the selected camera is the room containing an enemy, that enemy must freeze, stare at the camera, or twitch subtly, but must not advance to another room.
+   Exception: the Claude/Foxy-type character, after it has already escaped the start closet and begun the sprint sequence, may be visibly running through the hallway camera.
+
+3. Remove real-time score increase.
+   Do not show a score that increases during gameplay.
+   The HUD may show only:
+   - current month
+   - current month phase/progress
+   - remaining token amount as percentage with one decimal place, e.g. "남은 토큰 98.7%"
+   - door/light/CCTV states
+   Final score is calculated only at game over or clear.
+
+4. Remove red near-enemy markers.
+   Do not color near rooms red.
+   Do not flash a red enemy warning just because an enemy is near.
+   Horror should come from uncertainty, sound, static, lighting, subtle silhouettes, and direct observation.
+
+5. Remove enemy position dots from the CCTV map.
+   The map must never reveal enemy positions as dots, icons, labels, or colored markers.
+   The player must manually search CCTV feeds to find enemies.
+   The mini-map can show only camera room boxes and the currently selected camera.
+
+6. Make the dolls scarier and more distinct.
+   Regenerate the character assets. Current dolls are too generic and not scary.
+   Use original stylized parody toy dolls inspired by public AI figures, not real photos and not official company logos:
+   - Grok Doll: Elon Musk-inspired creepy executive chicken/bird-like doll, behavioral role inspired by Chica/right-side pressure.
+   - Gemini Doll: Demis Hassabis-inspired creepy rabbit/eared strategist doll, behavioral role inspired by Bonnie/left-side pressure.
+   - ChatGPT Doll: Sam Altman-inspired creepy bear/ringleader doll, behavioral role inspired by Freddy/stage leader.
+   - Claude Doll: Dario Amodei-inspired creepy fox/curtain-runner doll, behavioral role inspired by Foxy/sudden sprint.
+   These are stylized caricature toy dolls, not photorealistic portraits. Do not use real photos. Do not use real company logos. Do not copy FNAF character designs, textures, screenshots, names, or copyrighted assets. Use the role archetypes only.
+
+7. Replace "night/day" with "month".
+   The game concept is now: the player tries to survive month by month without paying for AI subscriptions.
+   Use "1개월차" through "5개월차" instead of "1일차" through "5일차".
+   Replace "6 AM" clear with "월말 정산 완료" or "이번 달 종료".
+   Stage clear message:
+   "이번달도 무사히 넘겼다. 역시 무료가 최고야."
+   Show button:
+   "다음 스테이지"
+   Show current stage remaining token percentage with one decimal place.
+
+8. Game over must show a subscription invoice.
+   When defeated, show:
+   "결제해버렸다..."
+   Then show the bill based on the defeating doll:
+   - Grok Doll: "Grok Heavy $300"
+   - ChatGPT Doll: "ChatGPT Pro $200"
+   - Claude Doll: "Claude Max $200"
+   - Gemini Doll: "Google AI Ultra $249.99"
+   Also show:
+   - defeated by which doll
+   - reached month/stage
+   - each cleared stage’s remaining token percentage
+   - failed current stage remaining token percentage and progress ratio
+   - final score / total token score
+   This is an in-game parody invoice only. Do not add real purchase links or any sign-up flow.
+
+9. Claude/Foxy-type sprint must be implemented properly.
+   Claude Doll should not behave like a normal path enemy.
+   It must have a closet/curtain/start-room state with multiple visual stages, then suddenly disappear, then sprint through left hallway cameras.
+   It must have actual generated sprint frames or high-quality pose images that create a convincing "와바바박 뛰어오는" effect.
+   If the left door is closed in time, it bangs the door, drains extra tokens, then resets to an earlier closet stage.
+   If left door is open, it jumpscares.
+
+10. Starting stage CCTV must be visually interesting.
+    Do not show four boring dolls lined up.
+    The start/stage camera should show close-up faces and shoulders in darkness, like a creepy group photo through CCTV.
+    Faces should loom close to the lens, partially cropped, with glowing eyes, awkward toy smiles, dark shadows, CRT static, and foreground occlusion.
+    When a doll leaves, its face should be missing from the composition or replaced by an empty dark gap.
+
+11. Add Light functionality.
+    Office must have left and right light buttons.
+    When a nearby enemy is at the door, holding or clicking Light reveals that enemy peeking from the doorway, only while the light is on.
+    Light costs tokens.
+    Light does not reveal Claude/Foxy while it is sprinting; Claude is handled by CCTV + left door timing.
+    If an enemy has already entered the office, door/light buttons should click/fail briefly, creating panic.
+
+12. CCTV room selection must support mouse clicks.
+    In addition to keyboard controls, every camera box on the CCTV mini-map must be clickable.
+    Left/right camera arrows can remain, but clickable map boxes are required.
+
+13. Jumpscares must be much scarier.
+    Use the uploaded reference collage as composition guidance only:
+    - face fills most of the screen
+    - tilted close-up angle
+    - huge glassy eyes
+    - open toy mouth
+    - hard flash, static, shake, zoom
+    - no gore
+    - no blood
+    - no graphic injury
+    Generate new jumpscare assets for each doll with more disturbing framing and lighting.
+    Use procedural WebAudio: sudden metallic scream/sting, static blast, low thud, fast modulation.
+    Jumpscare duration around 1.1–1.4 seconds, with first 0.2 sec hard flash and zoom.
+
+14. Final clear screen must say:
+    "쌀먹의 신"
+    Also show:
+    "5개월 동안 단 한 번도 결제하지 않았습니다."
+    Show each stage’s remaining token percentage:
+    1개월차: 82.3%
+    2개월차: ...
+    Final total:
+    "총 잔여 토큰량: 412.7"
+    or
+    "최종 점수: 412.7"
+    The score is the sum of the remaining token percentages from cleared months, rounded to one decimal.
+
+15. Update README and tests.
+    README must explain the month/token concept, controls, light, randomized AI, and scoring.
+    Tests must cover randomized behavior, camera-freeze behavior, scoring, no realtime score, no enemy map dots, and build success.
+
+==================================================
+IMPORTANT ASSET POLICY
+==================================================
+
+All visual assets must be generated by Codex image generation using $imagegen or created procedurally in code.
+
+Forbidden:
+- SVG
+- external images
+- downloaded photos
+- real company logos
+- FNAF screenshots
+- copied FNAF assets
+- copied FNAF character designs
+- real photos of Elon Musk, Demis Hassabis, Sam Altman, or Dario Amodei
+- copyrighted restaurant branding
+- enemy position icons/dots on CCTV map
+
+Allowed:
+- original generated PNG/WebP assets
+- stylized public-figure-inspired parody doll designs
+- procedural canvas effects
+- procedural WebAudio
+
+Use generated assets only. Save them under assets/generated/. Update assets/generated/asset_manifest.json.
+
+Keep fixed-canvas sprite rules:
+- Each character pose asset should be transparent PNG/WebP on a fixed canvas.
+- Do not auto-crop character pose images.
+- Keep a consistent bottom-center pivot.
+- Store pivot metadata in asset_manifest.json.
+- Render all poses from their pivot, not top-left.
+- If generated assets are cropped inconsistently, pad them in code or regenerate.
+
+==================================================
+NEW GAME TERMINOLOGY
+==================================================
+
+Replace terms:
+- Night -> Month
+- Day/Night clear -> Month clear
+- Power -> Tokens
+- Battery -> Tokens
+- 6 AM -> Month End / 월말 정산 완료
+- 1일차 -> 1개월차
+- 5일차 -> 5개월차
+
+Game title remains:
 "저는 결제하라고 나오면 닫아버립니다"
 
-Premise:
-The player is in a dark AI subscription support office at night. Four creepy AI mascot dolls try to enter the office and demand payment. The player survives by watching CCTV, tracking each doll’s movement, and closing the correct door at the correct time. CCTV and closed doors drain power. If the player survives until 6 AM, the night is cleared. Clear 5 nights to win. If a doll enters, briefly show an eerie empty-office fakeout, then a jumpscare, then show Retry / Exit and the score.
+Core joke:
+The player is avoiding AI subscription popups and trying to survive for five months as a free-tier user.
 
-Tone:
-Korean dark comedy + jump-scare horror. Creepy but not gory. No blood, gore, dismemberment, or graphic injury. The scare should come from sudden motion, sound, static, camera glitch, and the dolls yelling "돈내!!!!".
+HUD text:
+- "남은 토큰 98.7%"
+- "1개월차"
+- "월초", "1주차", "2주차", "3주차", "4주차", "월말"
+- "CCTV"
+- "왼쪽 문"
+- "오른쪽 문"
+- "왼쪽 라이트"
+- "오른쪽 라이트"
 
-Important IP rule:
-Do NOT use any Five Nights at Freddy’s copyrighted characters, images, names, logos, restaurant branding, or visual designs. Do NOT use real company logos for Gemini, Grok, ChatGPT, or Claude. The names may appear as plain text labels only. The characters must be original parody AI dolls with distinct silhouettes and colors, not replicas of any real logos, mascots, or copyrighted characters.
+Do not show live score during active play.
 
-========================
-TECH STACK
-========================
+==================================================
+MONTH LENGTH AND PROGRESS
+==================================================
 
-If the repo is empty or unsuitable, create a self-contained browser game using:
-- HTML5 Canvas
-- TypeScript or modern JavaScript
-- Vite if package setup is available; otherwise a static index.html + src/main.js is acceptable
-- No heavy game engine unless already present
-- No external image/audio/font assets
-- No remote CDNs
-- No SVG at all
-- No external copyrighted assets
-- All image assets must be generated with Codex image generation using $imagegen
-- Audio should be procedural WebAudio only: static, thuds, warning beeps, jumpscare sting, 6AM chime. No downloaded audio files.
+Use prototype pacing:
+MONTH_LENGTH_SECONDS = 90
 
-Required project files:
-- index.html
-- src/main.ts or src/main.js
-- src/game/
-- assets/generated/
-- assets/generated/asset_manifest.json
-- README.md with run instructions and controls
-- package.json with dev/build/test scripts if using Vite or another package setup
+Divide each month into 6 phases for AI level lookup:
+phase 0: 월초
+phase 1: 1주차
+phase 2: 2주차
+phase 3: 3주차
+phase 4: 4주차
+phase 5: 월말 직전
 
-The game must run locally with one simple command such as:
-npm install
-npm run dev
+At the end of 90 seconds:
+- stop enemies
+- close CCTV
+- unlock doors
+- play procedural clear chime
+- save remaining token percentage to stageTokenResults[currentMonth - 1]
+- show month clear screen unless month 5 is cleared
+- after month 5, show final clear screen
 
-Also support production build:
-npm run build
+==================================================
+TOKEN SYSTEM
+==================================================
 
-========================
-VISUAL ASSET GENERATION
-========================
+Start each month with:
+tokens = 100.0
 
-Use Codex image generation directly. Use $imagegen for all non-code visual assets.
+Display tokens with one decimal place.
 
-Absolutely forbidden:
-- SVG
-- external image files
-- downloaded images
-- copied FNAF screenshots
-- copied logos
-- copied mascot designs
-- auto-cropped inconsistent sprite sheets
+Drain:
+- base office drain: small
+- CCTV open: additional drain
+- each closed door: additional drain
+- each light on: additional drain, slightly less than door but still meaningful
+- Claude/Foxy door bang after successful block: instant token penalty that increases each time it is blocked
 
-Generate original PNG or WebP assets only.
+Example values, tune for fairness:
+BASE_TOKEN_DRAIN_PER_SEC = 0.12
+CCTV_TOKEN_DRAIN_PER_SEC = 0.32
+DOOR_TOKEN_DRAIN_PER_SEC = 0.38 per closed door
+LIGHT_TOKEN_DRAIN_PER_SEC = 0.24 per active light
+MONTH_4_MULTIPLIER = 1.10
+MONTH_5_MULTIPLIER = 1.18
 
-Use a consistent visual style:
-- cinematic 16:9 dark office horror
-- slightly cartoonish creepy AI dolls
-- Korean UI horror-comedy
-- CRT noise, CCTV static, dim fluorescent lighting, blue-gray shadows, red warning accents
-- non-gory jumpscare images
+Power-out equivalent:
+If tokens reach 0:
+- CCTV unavailable
+- doors open and cannot close
+- lights fail
+- office becomes dark
+- after a random delay, trigger a subscription blackout jumpscare unless the month ends first
+- Game over invoice can use ChatGPT Doll or the nearest active enemy, but label it as "토큰 소진"
 
-Generate at least these assets:
+Do not make tokens drain so fast that a skilled player cannot clear.
+Do not make tokens so generous that closing both doors forever works.
 
-1. Office and UI backgrounds
-- office_main.png: 16:9 first-person view from inside the security office. Desk, CCTV monitor in front, left and right doors visible at screen edges, dark server-room vibe.
-- office_left_door_closed.png: overlay or state image for left door closed.
-- office_right_door_closed.png: overlay or state image for right door closed.
-- office_powerout.png: dark emergency office view.
-- monitor_frame.png: close-up CCTV monitor frame / bezel, original design.
-- title_screen.png: title art with Korean title "저는 결제하라고 나오면 닫아버립니다", creepy office/paywall theme. Text must be readable.
+==================================================
+FINAL SCORING
+==================================================
 
-2. CCTV room backgrounds, 16:9 each
-- cam_stage.png: starting room with four empty chairs.
-- cam_lobby.png: payment kiosk lobby.
-- cam_server.png: server corridor.
-- cam_left_hall_far.png
-- cam_left_hall_near.png
-- cam_right_hall_far.png
-- cam_right_hall_near.png
-- cam_storage.png
+The competition requires score implementation. The score is now token-based.
 
-3. Four original AI doll characters
-Create four original characters. They can be named in UI as plain text:
-- Gemini Doll
-- Grok Doll
-- ChatGPT Doll
-- Claude Doll
+Do not show a live score while playing.
 
-Do not use official logos. Do not use brand marks. Do not copy real product icons. Make original creepy toy designs.
-
-For each doll, generate fixed-canvas transparent PNG pose assets:
-- idle
-- sneaking
-- near_door
-- running
-- jumpscare
-
-Critical sprite/pivot rule:
-Every character pose image must be a 512x512 transparent PNG.
-Never trim transparent pixels.
-Never auto-crop.
-The doll’s feet or lower body anchor must stay at the same pixel coordinate in every pose: pivotX = 256, pivotY = 450.
-The character’s centerline must stay around x = 256.
-Save exact pivot data in assets/generated/asset_manifest.json.
-Render all character sprites by bottom-center pivot, never by top-left corner.
-This is mandatory to prevent unnatural animation jumps.
-
-Animation rule:
-Do NOT rely on a chopped sprite sheet. Use individual fixed-canvas PNG pose images. For running and jumpscare, animate with scale, shake, blur, and alpha over the same pivot instead of moving cropped frames. If any sprite appears to teleport because of canvas cropping, fix the asset or rendering math before finishing.
-
-4. Effects
-- static_noise_tile.png or static_noise_overlay.png generated with image model, or procedural noise if easier
-- warning_vignette.png
-- paywall_popup.png: creepy Korean fake payment popup saying "결제하시겠습니까?" and "닫기"
-- gameover_bg.png
-- clear_bg.png
-
-Quality:
-Use high quality for title, office, jumpscare, and CCTV backgrounds.
-Use medium/high quality for character poses.
-Every generated asset must be saved into assets/generated/ and referenced through asset_manifest.json.
-
-========================
-CORE GAMEPLAY LOOP
-========================
-
-The player starts at title screen:
-- Title: "저는 결제하라고 나오면 닫아버립니다"
-- Buttons: Start, How to Play
-- How to Play explains in Korean:
-  "CCTV로 AI 인형의 위치를 확인하세요. 감시실 바로 옆 CCTV에서 인형이 '돈내!!!!' 하며 달려오면 해당 방향 문을 닫으세요. CCTV와 문은 전력을 소모합니다. 6AM까지 버티면 다음 날로 넘어갑니다. 5일차까지 버티면 클리어입니다."
-
-Office screen:
-- First-person office view
-- CCTV monitor is clickable in front
-- Left door button
-- Right door button
-- Power gauge
-- Current night: 1일차 ~ 5일차
-- Clock: 12 AM to 6 AM
-- Current total score or current night score preview
-- Visual door state indicators
-
-Controls:
-- Click CCTV monitor or press C: open/close CCTV
-- Left/Right arrow or A/D while CCTV is open: switch cameras
-- Q: toggle left door
-- E: toggle right door
-- Esc: close CCTV
-- Mouse works for all UI buttons
-- Retry and Exit buttons work after game over
-- After a clear, Next Night button advances unless night 5 is cleared
-
-CCTV screen:
-- Show monitor frame and selected camera background
-- Show actual current doll positions in that camera by compositing their character pose images
-- Show camera name, map mini-layout, power usage indicator, left/right camera arrows
-- Add static, occasional distortion, and Korean warning text
-- CCTV drains power while open
-- Camera feeds must reflect the real simulation state, not random fake images
-
-Map/camera graph:
-Rooms:
-- STAGE
-- LOBBY
-- SERVER
-- STORAGE
-- LEFT_HALL_FAR
-- LEFT_HALL_NEAR
-- RIGHT_HALL_FAR
-- RIGHT_HALL_NEAR
-- OFFICE_LEFT_ATTACK
-- OFFICE_RIGHT_ATTACK
-
-Office is not a camera, but attack states correspond to the doors.
-
-Character routes:
-1. Gemini Doll:
-   Route: STAGE -> LOBBY -> LEFT_HALL_FAR -> LEFT_HALL_NEAR -> OFFICE_LEFT_ATTACK
-   Behavior: steady, medium speed, sometimes pauses when watched.
-   Counter: close left door when it reaches LEFT_HALL_NEAR and starts running.
-
-2. Grok Doll:
-   Route: STAGE -> SERVER -> RIGHT_HALL_FAR -> RIGHT_HALL_NEAR -> OFFICE_RIGHT_ATTACK
-   Behavior: burst movement, faster on later nights, causes extra camera static.
-   Counter: close right door quickly when it reaches RIGHT_HALL_NEAR.
-
-3. ChatGPT Doll:
-   Route: STAGE -> LOBBY -> either LEFT_HALL_FAR or RIGHT_HALL_FAR -> matching NEAR -> matching ATTACK
-   Behavior: more readable, sometimes displays fake helpful text, can switch side once per night.
-   Counter: track its side and close the correct door.
-
-4. Claude Doll:
-   Route: STAGE -> STORAGE -> SERVER -> randomly LEFT_HALL_NEAR or RIGHT_HALL_NEAR -> matching ATTACK
-   Behavior: stealthy, less visible, shows subtle silhouette and fake payment popup.
-   Counter: pay attention to camera glitches and warning popup; close correct door.
-
-Attack warning:
-When a doll reaches LEFT_HALL_NEAR or RIGHT_HALL_NEAR, the CCTV for that room must visibly show the doll near the office and/or running toward camera with the Korean text:
-"돈내!!!!"
-
-After it starts attack:
-- Give player a short reaction window.
-- Night 1: 2.4 seconds
-- Night 2: 2.1 seconds
-- Night 3: 1.8 seconds
-- Night 4: 1.5 seconds
-- Night 5: 1.25 seconds
-
-If correct door is closed before the attack timer expires:
-- Play thud/static
-- Repel the doll back to a previous room
-- Award a small defense bonus
-- Door can be reopened manually
-
-If correct door is open when timer expires:
-- Doll enters office
-- Do not instantly game over
-- First show a fakeout: office looks empty and silent for about 1 second
-- Then jumpscare: the corresponding doll’s jumpscare image fills the screen with shake, zoom, static, and procedural scare sound
-- Then show Game Over screen with Retry / Exit and final score
-
-Power system:
-- Power starts at 100% each night
-- Base power drains slowly over time
-- CCTV open drains additional power
-- Each closed door drains additional power
-- Night 4 and Night 5 drain slightly faster
-- If power reaches 0:
-  - CCTV becomes unavailable
-  - doors open and cannot close
-  - lights dim
-  - after a short random delay, if not already 6AM, trigger a powerout jumpscare/game over
-- Player should be able to survive if they use CCTV and doors efficiently
-- Player should lose if they keep CCTV open constantly or close both doors for too long
-
-Use tunable constants:
-NIGHT_LENGTH_SECONDS = 90 for prototype pacing
-HOURS_PER_NIGHT = 6
-Power drain values should be balanced so a skilled player can clear all five nights, but wasteful play loses.
-
-Clock:
-- Starts at 12 AM
-- Progresses to 6 AM
-- At 6 AM:
-  - Stop all enemies
-  - Show "6 AM"
-  - Play procedural chime
-  - Calculate night score
-  - Show day score screen
-  - Proceed to next night or final clear screen after 5일차
-
-========================
-SCORING
-========================
-
-Score must be implemented and visible at game over or clear.
-
-Track:
-- completedNights
-- currentNight
-- remainingPower
-- survivedTimeRatio
-- successfulDoorBlocks
-- cameraUseSeconds
-- doorClosedSeconds
-- powerOut
-- nightScores array
-
-Night clear score formula:
-nightScore =
-  currentNight * 1000
-  + floor(remainingPower * 35)
-  + successfulDoorBlocks * 150
-  + max(0, 500 - floor(cameraUseSeconds * 3))
-  + max(0, 500 - floor(doorClosedSeconds * 2))
-
-Game over partial score:
-partialScore =
-  completedNights * 1000
-  + floor(survivedTimeRatio * 800)
-  + floor(remainingPower * 10)
-  + successfulDoorBlocks * 75
+On month clear:
+monthTokenScore = round(tokens * 10) / 10
+Save it in stageTokenResults.
+Show:
+"이번달도 무사히 넘겼다. 역시 무료가 최고야."
+"이번 스테이지 잔여 토큰: 83.4%"
+"다음 스테이지"
 
 On game over:
-- Show "GAME OVER"
-- Show defeated by which doll
-- Show current night
-- Show final score = sum(previous nightScores) + partialScore
-- Buttons: Retry, Exit
+partialFailedMonthScore = round(tokens * survivedRatio * 10) / 10
+finalScore = round((sum(cleared stageTokenResults) + partialFailedMonthScore) * 10) / 10
 
-On 5-night clear:
-- Show "CLEAR"
-- Show "5일차까지 결제창을 모두 닫았습니다"
-- Show each day’s score:
-  1일차: X
-  2일차: X
-  3일차: X
-  4일차: X
-  5일차: X
-- Show final total score = sum(nightScores)
-- Buttons: Retry, Exit
+Show:
+"결제해버렸다..."
+invoice plan based on defeatedBy
+"도달 스테이지: 3개월차"
+"진행률: 68.2%"
+"실패한 달 잔여 토큰: 41.5%"
+"실패한 달 반영 점수: 28.3"
+Then list cleared months:
+"1개월차 잔여 토큰: 76.8%"
+"2개월차 잔여 토큰: 62.2%"
+Final:
+"최종 점수: 167.3"
 
-========================
-LEVEL DESIGN / NIGHT DESIGN
-========================
+On full clear:
+finalScore = round(sum(stageTokenResults) * 10) / 10
+Show:
+"쌀먹의 신"
+"5개월 동안 단 한 번도 결제하지 않았습니다."
+List all five months with one decimal:
+"1개월차: 82.3%"
+...
+"총 잔여 토큰량: 412.7"
+"최종 점수: 412.7"
 
-Avoid monotonous level design. Each night must feel different.
+==================================================
+RANDOMIZED AI SYSTEM
+==================================================
 
-Night 1:
-- Tutorial-like
-- Gemini and ChatGPT active slowly
-- Grok and Claude mostly idle until later
+Replace fixed route timers with an AI action opportunity system.
 
-Night 2:
-- Grok becomes active
-- Right hall pressure increases
-- Introduce burst movement and stronger static
-
-Night 3:
-- Claude becomes active
-- Introduce fake paywall popup that briefly obscures CCTV
-- ChatGPT may switch sides once
-
-Night 4:
-- All four are active
-- Random camera blackout event for 1.5 seconds at most twice
-- Faster attack windows
-- More power pressure
-
-Night 5:
-- Final night
-- All dolls aggressive
-- At 3 AM trigger "Subscription Surge": static increases, power drains slightly faster for 15 seconds, and paywall popup appears once
-- Still fair and beatable with good play
-
-Important:
-Do not make levels by only increasing a single speed number. Add unique events, route differences, visibility differences, and warning differences.
-
-========================
-STATE MACHINE REQUIREMENTS
-========================
-
-Implement a clear game state machine:
-- TITLE
-- HOW_TO_PLAY
-- OFFICE
-- CCTV
-- NIGHT_CLEAR
-- GAME_OVER_FAKEOUT
-- JUMPSCARE
-- GAME_OVER
-- FINAL_CLEAR
-
-Enemy state:
+Every enemy has:
 - id
 - displayName
+- billingPlan
+- role
 - currentRoom
-- route
 - side
-- aggression
-- nextMoveTimer
-- attackTimer
-- visible
-- pose
-- repelledCooldown
-- hasSideSwitched if needed
+- aiLevelsByMonthPhase
+- actionCooldown
+- actionIntervalMin
+- actionIntervalMax
+- route memory
+- visualState
+- enteredOffice
+- blockedCount
+- lastWatchedAt
+- freezeAfterCameraCloseTimer
+- aggression modifiers
 
-Door state:
-- leftClosed
-- rightClosed
-- lockedByPowerOut
+Core action rule:
+Every 3–5 seconds for Gemini/Grok/Claude, roll:
+randomInt = integer 1..20
+if currentAILevel >= randomInt:
+    enemy gets an action opportunity
+else:
+    enemy stays
 
-Power state:
-- currentPower
-- cameraOpen
-- leftDoorClosed
-- rightDoorClosed
-- drainRate
+For ChatGPT/Freddy-type:
+- check every 3.0 seconds
+- use AI level roll
+- if successful, apply a short movement countdown except on higher months
+- camera watching can freeze it
 
-Use deterministic-ish randomness with a seed per night so behavior is varied but debuggable.
+Use real runtime randomness:
+- Do not use a fixed seed for normal gameplay.
+- Use Date.now(), crypto random, or Math.random for normal runs.
+- A debug seed can exist only for tests.
+- Same month replay should not produce identical movement sequences.
 
-========================
-UI / UX POLISH
-========================
+AI level table adapted to the 5-month game:
+Use 6 phase values per month.
 
-Use Korean UI text:
-- 시작
-- 조작법
-- 다시하기
-- 나가기
-- 다음 날
-- 전력
-- 점수
-- 1일차, 2일차, 3일차, 4일차, 5일차
-- CCTV
-- 왼쪽 문
-- 오른쪽 문
-- 돈내!!!!
+ChatGPT Doll / Sam-inspired / Freddy-role:
+month 1: [0,0,0,0,0,0]
+month 2: [0,0,0,0,0,0]
+month 3: [1,1,1,1,1,1]
+month 4: [2,2,2,2,2,2]
+month 5: [3,3,3,3,3,3]
 
-Office polish:
-- Subtle camera sway
-- Door close/open animation
-- Power gauge changes color or warning at low power
-- CCTV monitor glows
-- Static appears when switching camera
+Gemini Doll / Hassabis-inspired / Bonnie-role / left side:
+month 1: [0,0,1,2,3,3]
+month 2: [3,3,4,5,6,6]
+month 3: [0,0,1,2,3,3]
+month 4: [2,2,3,4,5,5]
+month 5: [5,5,6,7,8,8]
 
-CCTV polish:
-- Camera label
-- Mini-map with highlighted selected camera
-- Doll names as plain text labels when visible
-- Distortion and noise
-- Left/right arrows
-- "SIGNAL LOST" during blackout
+Grok Doll / Musk-inspired / Chica-role / right side:
+month 1: [0,0,0,1,2,2]
+month 2: [1,1,1,2,3,3]
+month 3: [5,5,5,6,7,7]
+month 4: [4,4,4,5,6,6]
+month 5: [7,7,7,8,9,9]
 
-Jumpscare polish:
-- No gore
-- Sudden zoom-in
-- screen shake
-- static flash
-- procedural sound sting
-- Korean text flash "돈내!!!!"
+Claude Doll / Amodei-inspired / Foxy-role / curtain runner:
+month 1: [0,0,0,1,2,2]
+month 2: [1,1,1,2,3,3]
+month 3: [2,2,2,3,4,4]
+month 4: [6,6,6,7,8,8]
+month 5: [5,5,5,6,7,7]
 
-Accessibility:
-- Add a mute button
-- Add a reduce motion toggle if easy
-- Do not make UI unreadable
-- Use large clickable buttons
+Difficulty meaning:
+0-2 easy
+3-6 medium
+7-12 hard
+13-20 extreme
 
-========================
-CRITICAL SPRITE / ANIMATION FIX
-========================
+Action roll must create varied behavior. Do not fake randomness with fixed timers.
 
-This is extremely important.
+==================================================
+CAMERA WATCH FREEZE RULE
+==================================================
 
-The game must not have the common bug where the idle sprite is centered but other poses appear far away from the correct position.
+This rule is mandatory.
 
-To prevent that:
-1. Do not use auto-cropped sprite sheets.
-2. Do not trim transparent pixels.
-3. Every character pose must be 512x512 transparent PNG.
-4. Use bottom-center pivot: pivotX 256, pivotY 450.
-5. Store pivot metadata in asset_manifest.json.
-6. Render via drawSpriteAtPivot(image, worldX, worldY, pivotX, pivotY, scale).
-7. Use the same world anchor for all poses of the same character.
-8. Test each character by switching idle -> sneaking -> near_door -> running -> jumpscare at the same anchor and confirm it does not jump sideways.
-9. If a generated pose violates the anchor, regenerate or pad it in code onto a 512x512 canvas before using it.
-10. Do not finish until all poses are visually stable.
+For Gemini, Grok, and ChatGPT:
+If CCTV is open and selectedCamera === enemy.currentRoom:
+- do not decrement action cooldown
+- do not perform action opportunity
+- do not advance route
+- do not start attack
+- render the enemy staring into the camera or frozen in a creepy pose
+- allow only tiny eye flicker/static/twitch animation, not position change
 
-For running toward the camera:
-Use scale/zoom/shake on the same fixed-canvas image instead of moving between cropped frames.
+If CCTV is open but another camera is selected:
+- enemy may move normally according to AI rules
 
-========================
-VALIDATION / DONE WHEN
-========================
+For Claude:
+- While Claude is in closet/curtain stages, any CCTV being open should slow or pause its stage advancement briefly.
+- Specifically checking the Claude closet camera should strongly freeze or reduce advancement.
+- Once Claude has escaped and is sprinting, camera watching does not stop the sprint. The player can see it running through left hallway camera, then must close left door.
 
-Do not stop after writing code. Validate the game.
+After closing CCTV:
+- some characters may have a random "freezeAfterCameraCloseTimer" of 0.2–1.2 seconds to avoid instant unfair movement.
+- Later months can reduce this grace.
 
-Done only when:
-- The app launches without errors.
+Add tests:
+- Place Gemini in LEFT_HALL_FAR. Open CCTV on LEFT_HALL_FAR for 30 simulated seconds. Assert Gemini does not change room.
+- Place Grok in RIGHT_HALL_FAR. Open CCTV on RIGHT_HALL_FAR for 30 simulated seconds. Assert Grok does not change room.
+- Place Claude in sprint state. Open CCTV on left hall. Assert sprint can continue.
+
+==================================================
+ENEMY BEHAVIOR DETAILS
+==================================================
+
+1. Gemini Doll / Hassabis-inspired / Bonnie-role
+Primary side: left.
+
+Personality:
+- quiet, patient, unnerving
+- appears as a rabbit/eared strategist doll with a Demis Hassabis-inspired face shape, glasses-like toy eye rims, and cold analytical eyes
+- not a real portrait, not a logo
+
+Routes:
+- STAGE -> LOBBY -> LEFT_HALL_FAR -> LEFT_HALL_NEAR -> LEFT_DOOR
+- May occasionally skip from LOBBY to LEFT_HALL_NEAR on higher months
+- May backtrack one step on failed action or random branch
+- After blocked at left door, usually returns to LOBBY, not always STAGE
+- On low AI, may stay at left door for a while, forcing token pressure
+
+Counter:
+- Use left light to check door.
+- If visible at left door, close left door.
+- If door is closed when it attacks, it is repelled.
+
+2. Grok Doll / Musk-inspired / Chica-role
+Primary side: right.
+
+Personality:
+- louder, sudden, aggressive
+- appears as a chicken/bird-like executive doll with Elon Musk-inspired facial caricature, sharp toy beak-like mouth, suit fragments, overly intense eyes
+- not a real portrait, not a logo
+
+Routes:
+- STAGE -> PAYWALL_CAFETERIA -> SERVER_KITCHEN -> RIGHT_HALL_FAR -> RIGHT_HALL_NEAR -> RIGHT_DOOR
+- Can visit an audio-only server/kitchen room where only clanking/electrical sound is heard
+- May pause in server room
+- May burst forward on high months
+
+Counter:
+- Use right light to check door.
+- If visible at right door, close right door.
+- If door is closed when it attacks, it is repelled.
+
+3. ChatGPT Doll / Sam-inspired / Freddy-role
+Primary side: stage leader, later right-side pressure.
+
+Personality:
+- calm, smiling, too polite, more frightening because it is restrained
+- appears as a bear/ringleader doll with Sam Altman-inspired face, neat executive toy suit, fixed smile, round eyes
+- not a real portrait, not a logo
+
+Behavior:
+- Mostly inactive until month 3.
+- Moves less often than others but becomes dangerous once advanced.
+- Route is mostly one-way:
+  STAGE -> LOBBY -> SERVER -> RIGHT_HALL_FAR -> RIGHT_HALL_NEAR -> RIGHT_DOOR
+- It should rarely move backward.
+- It can be frozen by watching its current camera.
+- If it reaches RIGHT_HALL_NEAR, the player should rely on right door/light.
+- If it has effectively entered the office, doors/lights may click-fail, and the next CCTV drop or short timer triggers jumpscare.
+
+Special:
+- On months 4–5, if ChatGPT is at RIGHT_HALL_NEAR, watching only the wrong camera should not stop it.
+- Watching its exact current camera should stop it.
+
+4. Claude Doll / Dario-inspired / Foxy-role
+Primary side: left sprint.
+
+Personality:
+- hidden, fast, anxious, unnerving
+- appears as a fox/curtain-runner doll with Dario Amodei-inspired facial caricature, thin anxious eyes, torn subscription cape, long angular snout-like mask
+- not a real portrait, not a logo
+
+States:
+- CLOSET_STAGE_0: curtain closed / barely visible
+- CLOSET_STAGE_1: curtain cracked / one eye visible
+- CLOSET_STAGE_2: leaning out / staring at camera
+- CLOSET_STAGE_3: gone / empty curtain
+- SPRINT_ARMED: escaped, waiting for sprint trigger
+- SPRINTING_LEFT_HALL: visible running through left hallway camera
+- AT_LEFT_DOOR: resolves by left door state
+- RESETTING
+
+Action:
+- On action opportunity, if not sufficiently watched, advance one closet stage.
+- If player checks Claude closet camera, pause stage advancement.
+- If player never opens CCTV for too long, Claude advances faster.
+- At final stage, Claude disappears.
+- After disappearing, either 25 seconds pass or player views a left hallway camera, then Claude sprints.
+- Sprint should show animated running frames or a zooming sequence through CAM 2A / CAM 2B equivalent.
+
+Block:
+- If left door is closed when Claude reaches door:
+  - play fast pounding sound
+  - screen shake
+  - subtract tokenPenalty = 1.0 + blockedCount * 4.0
+  - increment blockedCount
+  - reset Claude to CLOSET_STAGE_0 or CLOSET_STAGE_1 randomly
+- If left door is open:
+  - immediate fakeout -> jumpscare -> invoice
+
+Light:
+- Light does not reveal Claude during sprint. The player must use CCTV and timing.
+
+==================================================
+ROOMS AND CAMERAS
+==================================================
+
+Use FNAF-like camera naming but original room names.
+
+Rooms:
+- CAM_1A_STAGE / "CAM 1A: 무료 체험 무대"
+- CAM_1B_LOBBY / "CAM 1B: 결제 대기실"
+- CAM_1C_CLAUDE_CLOSET / "CAM 1C: 무료 체험 커튼"
+- CAM_2A_LEFT_HALL_FAR / "CAM 2A: 왼쪽 복도"
+- CAM_2B_LEFT_HALL_NEAR / "CAM 2B: 왼쪽 문 앞"
+- CAM_4A_RIGHT_HALL_FAR / "CAM 4A: 오른쪽 복도"
+- CAM_4B_RIGHT_HALL_NEAR / "CAM 4B: 오른쪽 문 앞"
+- CAM_6_SERVER_KITCHEN / "CAM 6: 서버실", optional visual-noisy/audio-heavy camera
+
+Office is not a camera.
+
+CCTV screen:
+- Big CCTV feed with static.
+- Mini-map overlay in lower-right or right side.
+- Camera boxes are clickable.
+- Selected camera box can be highlighted.
+- Enemy positions must NOT be shown on the map.
+- The only way to know where enemies are is by looking at the actual camera feed or using door lights.
+
+Remove any function that draws enemy map dots.
+Remove any "near room turns red" logic.
+Remove any UI text that says exactly where an enemy is unless it is part of the actual camera feed.
+
+Camera feed visuals:
+- Integrate enemies into the room, not pasted as flat icons.
+- Stage camera should use close-up faces, not a row of full-body dolls.
+- Hallway cameras should show partial bodies, silhouettes, eyes, or side-peeking figures.
+- Door-near camera can be empty sometimes, forcing light checks.
+- Server/kitchen may be mostly static/audio with occasional silhouette.
+
+==================================================
+LIGHT SYSTEM
+==================================================
+
+Add office left/right light controls.
+
+Input mapping:
+- C: open/close CCTV
+- Esc: close CCTV
+- Q: toggle left door
+- E: toggle right door
+- A: hold/toggle left light while in office
+- D: hold/toggle right light while in office
+- Mouse: click all UI controls
+- On CCTV screen, A/D or arrow keys can switch cameras, but map click is required too.
+- M: mute
+- R: reduce motion
+
+Office UI:
+- Left side has door button and light button.
+- Right side has door button and light button.
+- Light should be visible as a cone/flash in office view.
+- If enemy is at door:
+  - Gemini appears peeking at left door when left light is on.
+  - Grok appears peeking at right door when right light is on.
+  - ChatGPT appears at right door when right light is on, if it has reached that area.
+- If no enemy:
+  - light shows empty hallway/door gap.
+- If an enemy has already entered:
+  - light/door buttons may click but fail.
+  - This creates tension before jumpscare.
+
+Light cost:
+- drain tokens while light is active.
+- if using hold behavior, drain only while held.
+- if using toggle behavior, make it obvious and allow turning off.
+
+==================================================
+JUMPSCARE AND GAME OVER FLOW
+==================================================
+
+When an enemy enters:
+1. Close CCTV automatically.
+2. Show silent fakeout for 0.7–1.1 sec.
+   - empty office
+   - maybe buttons fail
+   - audio goes low
+   - no immediate text
+3. Jumpscare:
+   - use defeating doll’s generated jumpscare image
+   - face fills screen
+   - shake, zoom, CRT distortion, white static flashes
+   - procedural sting/scream
+   - show "돈내!!!!" for a few frames
+4. Game over invoice screen:
+   - "결제해버렸다..."
+   - invoice plan
+   - defeated by
+   - reached month
+   - token results
+   - final score
+   - buttons: "다시하기", "나가기"
+
+Do not use gore.
+Do not use blood.
+Do not use graphic injury.
+Make it scary through framing, sound, speed, static, and expression.
+
+==================================================
+ASSET GENERATION LIST
+==================================================
+
+Regenerate or add these assets with $imagegen.
+
+Style:
+- dark CCTV survival horror
+- Korean AI subscription parody
+- generated toy dolls
+- public-figure-inspired caricature dolls, stylized not photorealistic
+- CRT static, low light, hard shadows
+- unsettling toy faces
+- non-gory
+
+Office:
+- office_main_month.png: first-person office, monitor, left/right doors, AI billing posters, dark server ambience
+- office_left_light_empty.png
+- office_right_light_empty.png
+- office_left_light_gemini_peek.png
+- office_right_light_grok_peek.png
+- office_right_light_chatgpt_peek.png
+- office_left_door_closed.png
+- office_right_door_closed.png
+- office_powerout_tokens_empty.png
+- monitor_frame_crt.png
+
+CCTV backgrounds:
+- cam_1a_stage_close_faces.png: creepy close-up group composition, not row of dolls
+- cam_1a_stage_chatgpt_only.png
+- cam_1a_stage_missing_gemini.png
+- cam_1a_stage_missing_grok.png
+- cam_1a_stage_missing_claude.png
+- cam_1a_stage_empty.png
+- cam_1b_lobby_paywall.png
+- cam_1c_claude_closet_stage0.png
+- cam_1c_claude_closet_stage1.png
+- cam_1c_claude_closet_stage2.png
+- cam_1c_claude_closet_empty.png
+- cam_2a_left_hall_far.png
+- cam_2b_left_hall_near.png
+- cam_4a_right_hall_far.png
+- cam_4b_right_hall_near.png
+- cam_6_server_kitchen.png
+
+Character transparent pose assets, fixed canvas:
+For each Gemini/Grok/ChatGPT:
+- idle_close
+- hallway_far
+- hallway_near
+- door_peek
+- camera_stare
+- jumpscare
+
+For Claude:
+- closet_peek1
+- closet_peek2
+- closet_out
+- sprint_01
+- sprint_02
+- sprint_03
+- sprint_04
+- door_bang
+- jumpscare
+
+Jumpscare assets:
+- jumpscare_gemini.png
+- jumpscare_grok.png
+- jumpscare_chatgpt.png
+- jumpscare_claude.png
+Each should have a face-filling close-up, tilted camera angle, scary toy eyes/mouth, no gore.
+
+UI/effects:
+- title_screen_month.png
+- invoice_bg.png
+- clear_bg_ssalmeok_god.png
+- static_overlay.png
+- warning_vignette.png
+- paywall_popup_generated.png
+
+Asset quality requirement:
+- Title, office, CCTV stage, jumpscares: high quality.
+- No obviously flat placeholder drawings.
+- If an asset is too cute or generic, regenerate it.
+- If a character does not look distinct, regenerate it.
+- If text inside generated image is unreadable, render the text with canvas instead of relying on image text.
+
+==================================================
+RENDERING REQUIREMENTS
+==================================================
+
+Do not draw enemies as colored circles or dots.
+Do not draw enemies on the map.
+Do not red-highlight near rooms.
+Do not paste sprites flatly without scale/shadow.
+
+Implement:
+- room-specific anchors
+- depth scaling
+- alpha/silhouette blending
+- static overlay
+- camera distortion
+- occasional frame jitter
+- low visibility, but fair enough to see if carefully watched
+- camera stare pose when watched
+
+CCTV map:
+- clickable camera rectangles
+- selected camera highlight only
+- no enemy dots
+- no enemy labels on map
+- optional "REC" red dot as recording indicator only, not enemy marker
+
+HUD:
+- active play: no score number
+- show "남은 토큰 98.7%"
+- show month and phase
+- show controls compactly
+
+==================================================
+CODE CHANGES TO PRIORITIZE
+==================================================
+
+Likely files to update:
+- src/game/constants.js
+- src/game/enemies.js
+- src/game/state.js
+- src/game/render.js
+- src/game/score.js
+- src/game/assets.js
+- src/game/audio.js
+- tests
+
+Remove or replace:
+- getHudScore usage during gameplay
+- live score drawing
+- enemy map dot drawing
+- red near-room display
+- fixed seeded run behavior for normal play
+- deterministic same route path for all month 1 enemies
+- "day/night" text
+- "power" text, replacing with token text
+
+Add:
+- month terminology
+- stageTokenResults array
+- token scoring functions
+- invoice data map
+- light state
+- camera click hitboxes
+- AI action opportunity scheduler
+- watched-camera freeze rule
+- Claude/Foxy special state machine
+- more varied route branching for Gemini/Grok
+- ChatGPT/Freddy-style one-way pressure
+- tests
+
+==================================================
+TESTS / VALIDATION
+==================================================
+
+Add or update automated tests where possible.
+
+Required tests:
+1. Random distribution test:
+   Simulate month 1 at least 50 times with different random seeds.
+   Assert that not all runs produce the exact same first two enemy approaches.
+   Assert at least one left-side and one right-side approach can occur across the set.
+
+2. Watched camera freeze test:
+   Put Gemini in CAM_2A_LEFT_HALL_FAR.
+   Open CCTV on CAM_2A_LEFT_HALL_FAR.
+   Simulate 30 seconds.
+   Assert Gemini remains in that room.
+
+3. Wrong camera no-freeze test:
+   Put Grok in CAM_4A_RIGHT_HALL_FAR.
+   Open CCTV on CAM_1A_STAGE.
+   Simulate long enough for action opportunities.
+   Assert Grok can move if AI roll succeeds.
+
+4. Claude sprint exception test:
+   Put Claude in SPRINTING_LEFT_HALL.
+   Open CCTV on left hallway.
+   Assert sprint state can advance.
+
+5. No realtime score test:
+   Render active office state.
+   Assert no "점수" or numeric final score HUD is drawn during gameplay, except token percentage.
+
+6. Token scoring test:
+   Given cleared months [80.1, 70.2] and failed month tokens 50.0 with progress 0.5, final game over score is 175.3.
+   Given cleared months [80.1,70.2,60.3,50.4,40.5], final clear score is 301.5.
+
+7. Map no enemy dots test:
+   Ensure CCTV map render function receives only selected camera and camera hitboxes, not enemy position markers.
+   If hard to assert visually, assert there is no function or branch named drawEnemyDots/drawEnemyMapMarkers.
+
+8. Build test:
+   npm run build must pass.
+
+Manual validation checklist in README:
+- Month 1 is easy but not fixed.
+- Watching a room freezes visible non-Claude enemies.
+- Claude can sprint.
+- Lights reveal door enemies.
+- CCTV map has no enemy dots.
+- No red near warning.
+- No live score increase.
+- Game over invoice appears.
+- Month clear shows remaining tokens.
+- Final clear says "쌀먹의 신".
+
+==================================================
+DONE WHEN
+==================================================
+
+You are done only when:
+- npm install succeeds if needed.
+- npm run test passes.
+- npm run build passes.
+- Game launches locally.
 - Title screen works.
-- Start begins Night 1.
-- CCTV opens and closes.
-- Camera arrows switch feeds.
-- Enemies visibly move across actual camera rooms.
-- "돈내!!!!" warning appears when an enemy is at a near-office camera.
-- Left and right doors can close/open and drain power.
-- Closing the correct door repels the correct enemy.
-- Failing to close the correct door triggers fakeout -> jumpscare -> Game Over.
-- Game Over screen shows Retry / Exit and final score.
-- Surviving to 6 AM calculates a night score and proceeds.
-- Clearing 5일차 shows final clear screen with all daily scores and total score.
-- Power can run out and causes the intended powerout behavior.
-- All generated visual assets are local files in assets/generated/.
-- No SVG files exist in the project.
-- No external image/audio/font assets are used.
-- No FNAF original characters, logos, screenshots, or copied visual designs are used.
-- npm run build succeeds if package scripts exist.
-- Add a simple automated or manual test checklist in README.md.
-- If possible, create a small simulation test for enemy movement/scoring logic and run it.
+- Start begins 1개월차.
+- CCTV opens/closes.
+- CCTV camera boxes are clickable with mouse.
+- Keyboard controls work.
+- Enemies move with randomized action opportunities.
+- Month 1 does not always play the same route.
+- Non-Claude enemies freeze when the player watches their current camera.
+- Claude has curtain stages and sprint behavior.
+- Left/right lights exist and consume tokens.
+- Lights reveal door enemies when appropriate.
+- Token percentage displays with one decimal.
+- No live score appears during gameplay.
+- Red near-room markers are gone.
+- Enemy map dots are gone.
+- Game over shows fakeout -> scarier jumpscare -> invoice.
+- Invoice uses the correct plan for the defeating doll.
+- Month clear says "이번달도 무사히 넘겼다. 역시 무료가 최고야."
+- 5-month clear says "쌀먹의 신".
+- Final token score is calculated and shown.
+- All required generated assets are local.
+- No SVG exists.
+- No external images/audio/fonts/CDNs are used.
+- README documents controls, month/token concept, scoring, and tests.
 
-If something breaks, fix it before completing the goal. No TODO placeholders for core gameplay. No "future work" for required systems.
-
-========================
-README REQUIREMENTS
-========================
-
-README.md must include:
-- Game title
-- How to run
-- Controls
-- Rules
-- Scoring formula
-- Asset policy: all visual assets generated through Codex image generation; no SVG; no external copyrighted assets
-- Known limitations only for non-core polish, not for missing gameplay
+Do not stop until all of the above are true.

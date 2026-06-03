@@ -72,6 +72,7 @@ async function assertManifest() {
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
   const rootDir = join(root, manifest.assetRoot);
   const spriteFiles = [];
+  const jumpscareFiles = [];
 
   for (const file of Object.values(manifest.backgrounds)) assertExists(rootDir, file);
   for (const file of Object.values(manifest.cameras)) assertExists(rootDir, file);
@@ -80,9 +81,13 @@ async function assertManifest() {
     if (character.pivotX !== 256 || character.pivotY !== 450) {
       throw new Error(`Invalid sprite pivot for ${character.displayName}`);
     }
-    for (const file of Object.values(character.poses)) {
+    for (const [pose, file] of Object.entries(character.poses)) {
       assertExists(rootDir, file);
-      spriteFiles.push(join(rootDir, file));
+      if (pose === 'jumpscare') {
+        jumpscareFiles.push(join(rootDir, file));
+      } else {
+        spriteFiles.push(join(rootDir, file));
+      }
     }
   }
 
@@ -91,6 +96,14 @@ async function assertManifest() {
     const { width, height } = readPngSize(buffer);
     if (width !== 512 || height !== 512) {
       throw new Error(`Sprite must be 512x512: ${file} is ${width}x${height}`);
+    }
+  }
+
+  for (const file of jumpscareFiles) {
+    const buffer = await readFile(file);
+    const { width, height } = readPngSize(buffer);
+    if (width / height < 1.6 || width / height > 1.9) {
+      throw new Error(`Jumpscare must be widescreen: ${file} is ${width}x${height}`);
     }
   }
 }
