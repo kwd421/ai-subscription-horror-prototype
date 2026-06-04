@@ -40,10 +40,10 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-setLoadingProgress('자산 로딩 중... 0%');
+setLoadingProgress('에셋 로딩중 0%');
 
 loadAssets(undefined, {
-  onProgress: ({ percent }) => setLoadingProgress(`자산 로딩 중... ${percent}%`)
+  onProgress: ({ percent }) => setLoadingProgress(`에셋 로딩중 ${percent}%`)
 })
   .then((loadedAssets) => {
     assets = loadedAssets;
@@ -52,7 +52,7 @@ loadAssets(undefined, {
     if (!testMode) requestAnimationFrame(frame);
   })
   .catch((error) => {
-    setLoadingProgress(`자산 로딩 실패: ${error.message}`);
+    setLoadingProgress(`에셋 로딩 실패: ${error.message}`);
     console.error(error);
   });
 

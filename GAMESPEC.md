@@ -451,7 +451,7 @@ Personality:
 - not a real portrait, not a logo
 
 Routes:
-- STAGE -> PAYWALL_CAFETERIA -> SERVER_KITCHEN -> RIGHT_HALL_FAR -> RIGHT_HALL_NEAR -> RIGHT_DOOR
+- STAGE -> LOBBY -> RESTROOMS -> SERVER_KITCHEN -> RIGHT_HALL_FAR -> RIGHT_HALL_NEAR -> RIGHT_DOOR
 - Can visit an audio-only server/kitchen room where only clanking/electrical sound is heard
 - May pause in server room
 - May burst forward on high months
@@ -473,7 +473,7 @@ Behavior:
 - Mostly inactive until month 3.
 - Moves less often than others but becomes dangerous once advanced.
 - Route is mostly one-way:
-  STAGE -> LOBBY -> BACKSTAGE -> SERVER -> RIGHT_HALL_FAR -> RIGHT_HALL_NEAR -> RIGHT_DOOR
+  STAGE -> LOBBY -> RESTROOMS -> SERVER -> RIGHT_HALL_FAR -> RIGHT_HALL_NEAR -> RIGHT_DOOR
 - It should rarely move backward.
 - It can be frozen by watching its current camera.
 - If it reaches RIGHT_HALL_NEAR, the player should rely on right door/light.
@@ -539,6 +539,7 @@ Rooms:
 - CAM_4B_RIGHT_HALL_NEAR / "CAM 4B: 오른쪽 문 앞"
 - CAM_5_BACKSTAGE / "CAM 5: 백스테이지"
 - CAM_6_SERVER_KITCHEN / "CAM 6: 서버실", optional visual-noisy/audio-heavy camera
+- CAM_7_RESTROOMS / "CAM 7: 정산 화장실"
 
 Office is not a camera.
 

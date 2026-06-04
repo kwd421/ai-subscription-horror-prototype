@@ -31,7 +31,8 @@ test('month constants use FNAF-style 8m55s pacing and month phase boundaries', (
   assert.ok(CAMERAS.includes(ROOMS.CAM_1C_CLAUDE_CLOSET));
   assert.ok(CAMERAS.includes(ROOMS.CAM_3_SUPPLY_CLOSET));
   assert.ok(CAMERAS.includes(ROOMS.CAM_5_BACKSTAGE));
-  assert.equal(CAMERAS.length, 10);
+  assert.ok(CAMERAS.includes(ROOMS.CAM_7_RESTROOMS));
+  assert.equal(CAMERAS.length, 11);
 });
 
 test('seeded rng is deterministic and stays inside [0, 1)', () => {
@@ -62,7 +63,11 @@ test('enemy definitions match month-era role contracts and invoice plans', () =>
   ]);
   assert.equal(gemini.side, 'left');
   assert.equal(gemini.billingPlan, 'Google AI Ultra $249.99');
-  assert.deepEqual(grok.route.slice(-3), [
+  assert.deepEqual(grok.route, [
+    ROOMS.CAM_1A_STAGE,
+    ROOMS.CAM_1B_LOBBY,
+    ROOMS.CAM_7_RESTROOMS,
+    ROOMS.CAM_6_SERVER_KITCHEN,
     ROOMS.CAM_4A_RIGHT_HALL_FAR,
     ROOMS.CAM_4B_RIGHT_HALL_NEAR,
     ROOMS.RIGHT_DOOR
@@ -70,7 +75,15 @@ test('enemy definitions match month-era role contracts and invoice plans', () =>
   assert.equal(grok.side, 'right');
   assert.equal(grok.billingPlan, 'Grok Heavy $300');
   assert.equal(chatgpt.billingPlan, 'ChatGPT Pro $200');
-  assert.ok(chatgpt.route.includes(ROOMS.CAM_5_BACKSTAGE));
+  assert.deepEqual(chatgpt.route, [
+    ROOMS.CAM_1A_STAGE,
+    ROOMS.CAM_1B_LOBBY,
+    ROOMS.CAM_7_RESTROOMS,
+    ROOMS.CAM_6_SERVER_KITCHEN,
+    ROOMS.CAM_4A_RIGHT_HALL_FAR,
+    ROOMS.CAM_4B_RIGHT_HALL_NEAR,
+    ROOMS.RIGHT_DOOR
+  ]);
   assert.equal(claude.role, 'curtain-runner');
   assert.equal(claude.billingPlan, 'Claude Max $200');
   assert.equal(claude.visualState, 'CLOSET_STAGE_0');
@@ -119,18 +132,41 @@ test('CCTV map renders original-style connected CAM labels and YOU marker', asyn
   assert.match(renderSource, /text\(ctx, 'CAM'/);
   assert.match(renderSource, /function drawYouMarker/);
   assert.match(renderSource, /text\(ctx, 'YOU'/);
+  assert.match(renderSource, /\[ROOMS\.CAM_7_RESTROOMS\]: '7'/);
   assert.doesNotMatch(renderSource, /shortCameraLabel\(camera\)/);
 });
 
 test('HUD source follows original-style time, token, and usage placement', async () => {
   const renderSource = await readFile('src/game/render.js', 'utf8');
 
-  assert.match(renderSource, /drawTopRightTime\(ctx, state\)/);
-  assert.match(renderSource, /drawBottomLeftTokenPanel\(ctx, state\)/);
+  assert.match(renderSource, /drawTopRightTime\(ctx, state, boxed\)/);
+  assert.match(renderSource, /drawBottomLeftTokenPanel\(ctx, state, boxed\)/);
   assert.match(renderSource, /drawUsageBars\(ctx, getUsageBarsForRender\(state\)\)/);
   assert.match(renderSource, /const CCTV_MAP_LAYOUT_ORIGIN = Object\.freeze\(\{ x: 910, y: 316 \}\)/);
   assert.doesNotMatch(renderSource, /function drawGlobalToggles/);
   assert.doesNotMatch(renderSource, /id, label: labelText, x: 1000, y: 590/);
+});
+
+test('office screen only keeps door and light controls as boxed UI', async () => {
+  const renderSource = await readFile('src/game/render.js', 'utf8');
+  const officeStart = renderSource.indexOf('function drawOffice');
+  const officeEnd = renderSource.indexOf('function drawCctv', officeStart);
+  const officeSource = renderSource.slice(officeStart, officeEnd);
+  const controlsStart = renderSource.indexOf('function drawDoorAndLightControls');
+  const controlsEnd = renderSource.indexOf('function selectOfficeBackground', controlsStart);
+  const controlsSource = renderSource.slice(controlsStart, controlsEnd);
+  const hudStart = renderSource.indexOf('function drawHud');
+  const hudEnd = renderSource.indexOf('function getUsageBarsForRender', hudStart);
+  const hudSource = renderSource.slice(hudStart, hudEnd);
+
+  assert.match(officeSource, /state\.ui\.push\(\{ id: 'toggleCctv'/);
+  assert.match(officeSource, /drawHud\(ctx, state, \{ boxed: false \}\)/);
+  assert.doesNotMatch(officeSource, /drawButton\(ctx, state, 'toggleCctv', 'CCTV'/);
+  assert.match(controlsSource, /drawButton\(ctx, state, 'leftDoor'/);
+  assert.match(controlsSource, /drawButton\(ctx, state, 'leftLight'/);
+  assert.match(controlsSource, /drawButton\(ctx, state, 'rightDoor'/);
+  assert.match(controlsSource, /drawButton\(ctx, state, 'rightLight'/);
+  assert.match(hudSource, /if \(boxed\) drawPanel/);
 });
 
 test('office light renderer draws left and right beams independently', async () => {

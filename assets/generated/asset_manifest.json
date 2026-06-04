@@ -43,7 +43,8 @@
     "CAM_4A_RIGHT_HALL_FAR": "cam_4a_right_hall_far.png",
     "CAM_4B_RIGHT_HALL_NEAR": "cam_4b_right_hall_near.png",
     "CAM_5_BACKSTAGE": "cam_5_backstage.png",
-    "CAM_6_SERVER_KITCHEN": "cam_6_server_kitchen.png"
+    "CAM_6_SERVER_KITCHEN": "cam_6_server_kitchen.png",
+    "CAM_7_RESTROOMS": "cam_7_restroom.png"
   },
   "cameraOccupants": {
     "CAM_1B_LOBBY": {
@@ -83,6 +84,11 @@
       "grok": "cam_6_server_kitchen_grok.png",
       "chatgpt": "cam_6_server_kitchen_chatgpt.png",
       "chatgpt+grok": "cam_6_server_kitchen_chatgpt_grok.png"
+    },
+    "CAM_7_RESTROOMS": {
+      "grok": "cam_7_restroom_grok.png",
+      "chatgpt": "cam_7_restroom_chatgpt.png",
+      "chatgpt+grok": "cam_7_restroom_chatgpt_grok.png"
     }
   },
   "effects": {

@@ -148,7 +148,7 @@ test('wrong camera does not freeze Grok when AI roll succeeds', () => {
   const grok = {
     ...createEnemy('grok', 5, createSeededRng('wrong-camera-grok')),
     currentRoom: ROOMS.CAM_4A_RIGHT_HALL_FAR,
-    routeIndex: 2,
+    routeIndex: 4,
     actionCooldown: 0.1,
     aiLevelsByMonthPhase: { 5: [20, 20, 20, 20, 20, 20] }
   };
@@ -218,7 +218,7 @@ test('open door attack flows through fakeout, jumpscare, and invoice score', () 
     {
       ...createEnemy('grok', 3, createSeededRng('invoice')),
       currentRoom: ROOMS.RIGHT_DOOR,
-      routeIndex: 4,
+      routeIndex: 6,
       side: 'right',
       doorAttackTimer: 0
     }

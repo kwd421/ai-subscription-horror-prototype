@@ -58,6 +58,8 @@ export const ENEMY_DEFS = Object.freeze({
     side: 'right',
     route: [
       ROOMS.CAM_1A_STAGE,
+      ROOMS.CAM_1B_LOBBY,
+      ROOMS.CAM_7_RESTROOMS,
       ROOMS.CAM_6_SERVER_KITCHEN,
       ROOMS.CAM_4A_RIGHT_HALL_FAR,
       ROOMS.CAM_4B_RIGHT_HALL_NEAR,
@@ -75,7 +77,7 @@ export const ENEMY_DEFS = Object.freeze({
     route: [
       ROOMS.CAM_1A_STAGE,
       ROOMS.CAM_1B_LOBBY,
-      ROOMS.CAM_5_BACKSTAGE,
+      ROOMS.CAM_7_RESTROOMS,
       ROOMS.CAM_6_SERVER_KITCHEN,
       ROOMS.CAM_4A_RIGHT_HALL_FAR,
       ROOMS.CAM_4B_RIGHT_HALL_NEAR,
@@ -205,7 +207,7 @@ export function isDoorRoom(room) {
 
 export function sideForRoom(room) {
   if ([ROOMS.CAM_3_SUPPLY_CLOSET, ROOMS.CAM_2A_LEFT_HALL_FAR, ROOMS.CAM_2B_LEFT_HALL_NEAR, ROOMS.LEFT_DOOR].includes(room)) return 'left';
-  if ([ROOMS.CAM_4A_RIGHT_HALL_FAR, ROOMS.CAM_4B_RIGHT_HALL_NEAR, ROOMS.RIGHT_DOOR].includes(room)) return 'right';
+  if ([ROOMS.CAM_7_RESTROOMS, ROOMS.CAM_6_SERVER_KITCHEN, ROOMS.CAM_4A_RIGHT_HALL_FAR, ROOMS.CAM_4B_RIGHT_HALL_NEAR, ROOMS.RIGHT_DOOR].includes(room)) return 'right';
   return null;
 }
 

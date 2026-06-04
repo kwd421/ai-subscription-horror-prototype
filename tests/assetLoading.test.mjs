@@ -89,6 +89,9 @@ test('CCTV renderer draws the opaque monitor frame behind the camera feed', asyn
 
 test('manifest defines room-specific occupied CCTV plates including multi-enemy rooms', async () => {
   const manifest = JSON.parse(await readFile('assets/generated/asset_manifest.json', 'utf8'));
+  assert.ok(manifest.cameras?.CAM_7_RESTROOMS, 'CAM_7_RESTROOMS should have a camera background');
+  assert.ok(existsSync(`assets/generated/${manifest.cameras.CAM_7_RESTROOMS}`), 'CAM 7 background should exist');
+
   const requiredVariants = {
     CAM_1B_LOBBY: ['gemini', 'chatgpt', 'chatgpt+gemini'],
     CAM_2A_LEFT_HALL_FAR: ['gemini', 'claude', 'claude+gemini'],
@@ -97,7 +100,8 @@ test('manifest defines room-specific occupied CCTV plates including multi-enemy 
     CAM_4A_RIGHT_HALL_FAR: ['grok', 'chatgpt', 'chatgpt+grok'],
     CAM_4B_RIGHT_HALL_NEAR: ['grok', 'chatgpt', 'chatgpt+grok'],
     CAM_5_BACKSTAGE: ['gemini', 'chatgpt', 'chatgpt+gemini'],
-    CAM_6_SERVER_KITCHEN: ['grok', 'chatgpt', 'chatgpt+grok']
+    CAM_6_SERVER_KITCHEN: ['grok', 'chatgpt', 'chatgpt+grok'],
+    CAM_7_RESTROOMS: ['grok', 'chatgpt', 'chatgpt+grok']
   };
 
   for (const [camera, variants] of Object.entries(requiredVariants)) {
@@ -129,6 +133,16 @@ test('index loading screen uses the CAM 1A stage art and a live percent target',
   assert.match(html, /id="loadingProgress"/);
   assert.match(html, /assets\/generated\/cam_1a_stage_close_faces\.png/);
   assert.ok(existsSync('assets/generated/cam_1a_stage_close_faces.png'));
+});
+
+test('loading screen says asset loading without the static kicker copy', async () => {
+  const html = await readFile('index.html', 'utf8');
+  const mainSource = await readFile('src/main.js', 'utf8');
+
+  assert.match(html, />에셋 로딩중 0%</);
+  assert.doesNotMatch(html, /치직|loading-kicker|자산 로딩 중/);
+  assert.match(mainSource, /에셋 로딩중/);
+  assert.doesNotMatch(mainSource, /자산 로딩 중/);
 });
 
 test('manifest exposes the stare image for randomized title glitch flashes', async () => {

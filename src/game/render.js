@@ -43,6 +43,10 @@ const CAMERA_ANCHORS = Object.freeze({
   [ROOMS.CAM_6_SERVER_KITCHEN]: {
     grok: [720, 620, 0.54],
     chatgpt: [520, 620, 0.5]
+  },
+  [ROOMS.CAM_7_RESTROOMS]: {
+    grok: [720, 620, 0.54],
+    chatgpt: [520, 620, 0.5]
   }
 });
 
@@ -57,7 +61,8 @@ const CCTV_MAP_LAYOUT = Object.freeze({
   [ROOMS.CAM_4A_RIGHT_HALL_FAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 184, CCTV_MAP_LAYOUT_ORIGIN.y + 240, 58, 42],
   [ROOMS.CAM_4B_RIGHT_HALL_NEAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 184, CCTV_MAP_LAYOUT_ORIGIN.y + 286, 58, 42],
   [ROOMS.CAM_5_BACKSTAGE]: [CCTV_MAP_LAYOUT_ORIGIN.x + 8, CCTV_MAP_LAYOUT_ORIGIN.y + 82, 58, 42],
-  [ROOMS.CAM_6_SERVER_KITCHEN]: [CCTV_MAP_LAYOUT_ORIGIN.x + 246, CCTV_MAP_LAYOUT_ORIGIN.y + 224, 58, 42]
+  [ROOMS.CAM_6_SERVER_KITCHEN]: [CCTV_MAP_LAYOUT_ORIGIN.x + 246, CCTV_MAP_LAYOUT_ORIGIN.y + 224, 58, 42],
+  [ROOMS.CAM_7_RESTROOMS]: [CCTV_MAP_LAYOUT_ORIGIN.x + 246, CCTV_MAP_LAYOUT_ORIGIN.y + 92, 58, 42]
 });
 
 const CAMERA_MAP_LABELS = Object.freeze({
@@ -70,7 +75,8 @@ const CAMERA_MAP_LABELS = Object.freeze({
   [ROOMS.CAM_4A_RIGHT_HALL_FAR]: '4A',
   [ROOMS.CAM_4B_RIGHT_HALL_NEAR]: '4B',
   [ROOMS.CAM_5_BACKSTAGE]: '5',
-  [ROOMS.CAM_6_SERVER_KITCHEN]: '6'
+  [ROOMS.CAM_6_SERVER_KITCHEN]: '6',
+  [ROOMS.CAM_7_RESTROOMS]: '7'
 });
 
 export function renderGame(ctx, state, assets, now = performance.now()) {
@@ -201,9 +207,8 @@ function drawOffice(ctx, state, assets, now) {
     state.ui.push({ id: 'toggleCctv', label: 'CCTV', x: 314, y: 246, w: 310, h: 206 });
   }
 
-  drawHud(ctx, state);
+  drawHud(ctx, state, { boxed: false });
   drawDoorAndLightControls(ctx, state);
-  drawButton(ctx, state, 'toggleCctv', 'CCTV', 516, 634, 248, 50, state.cameraOpen);
 
   if (state.stats.tokenOut) {
     text(ctx, '토큰 소진', 640, 342, 70, '#e6eff8', 'center', '900');
@@ -291,7 +296,7 @@ function drawCctvMapConnections(ctx) {
   ctx.strokeRect(x + 74, y + 56, 176, 166);
   ctx.strokeRect(x - 2, y + 74, 60, 120);
   ctx.strokeRect(x - 2, y + 214, 88, 112);
-  ctx.strokeRect(x + 226, y + 92, 64, 132);
+  ctx.strokeRect(x + 226, y + 76, 64, 148);
   ctx.strokeRect(x + 226, y + 224, 76, 70);
 
   drawMapPath(ctx, [
@@ -316,8 +321,8 @@ function drawCctvMapConnections(ctx) {
     [x + 212, y + 326]
   ]);
   drawMapPath(ctx, [
-    [x + 244, y + 158],
-    [x + 282, y + 158]
+    [x + 244, y + 114],
+    [x + 282, y + 114]
   ]);
   drawMapPath(ctx, [
     [x + 244, y + 254],
@@ -436,21 +441,21 @@ function drawFinalClear(ctx, state, assets) {
   drawButton(ctx, state, 'exitToTitle', UI_TEXT.exit, 655, 614, 170, 52);
 }
 
-function drawHud(ctx, state) {
-  drawTopRightTime(ctx, state);
-  drawBottomLeftTokenPanel(ctx, state);
+function drawHud(ctx, state, { boxed = true } = {}) {
+  drawTopRightTime(ctx, state, boxed);
+  drawBottomLeftTokenPanel(ctx, state, boxed);
 }
 
-function drawTopRightTime(ctx, state) {
+function drawTopRightTime(ctx, state, boxed = true) {
   const labels = getRuntimeLabels(state);
-  drawPanel(ctx, 1056, 24, 176, 82, 0.62);
+  if (boxed) drawPanel(ctx, 1056, 24, 176, 82, 0.62);
   text(ctx, labels.phase, 1212, 60, 30, '#f4fbff', 'right', '900');
   text(ctx, labels.month, 1212, 90, 20, '#d3ecf7', 'right', '800');
 }
 
-function drawBottomLeftTokenPanel(ctx, state) {
+function drawBottomLeftTokenPanel(ctx, state, boxed = true) {
   const labels = getRuntimeLabels(state);
-  drawPanel(ctx, 32, 574, 302, 120, 0.66);
+  if (boxed) drawPanel(ctx, 32, 574, 302, 120, 0.66);
   text(ctx, '남은 전력', 54, 612, 21, '#d9edf7', 'left', '800');
   text(ctx, labels.tokens, 206, 612, 30, '#f6fbff', 'left', '900');
   drawTokenGauge(ctx, 54, 626, state.tokens);
