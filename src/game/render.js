@@ -262,6 +262,7 @@ function drawOffice(ctx, state, assets, now) {
   if (!state.stats.tokenOut) {
     glow(ctx, 432, 382, 148, '#6bdfff', 0.17 + Math.sin(now / 250) * 0.04);
     state.ui.push({ id: 'toggleCctv', label: 'CCTV', x: 314, y: 246, w: 310, h: 206 });
+    drawButton(ctx, state, 'toggleCctv', 'CCTV', 500, 638, 280, 48);
   }
 
   drawHud(ctx, state, { boxed: false });

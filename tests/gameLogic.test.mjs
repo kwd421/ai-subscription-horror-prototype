@@ -187,7 +187,7 @@ test('HUD source follows original-style time, token, and usage placement', async
   assert.doesNotMatch(renderSource, /id, label: labelText, x: 1000, y: 590/);
 });
 
-test('office screen only keeps door and light controls as boxed UI', async () => {
+test('office screen keeps visible CCTV, door, and light controls', async () => {
   const renderSource = await readFile('src/game/render.js', 'utf8');
   const officeStart = renderSource.indexOf('function drawOffice');
   const officeEnd = renderSource.indexOf('function drawCctv', officeStart);
@@ -200,8 +200,8 @@ test('office screen only keeps door and light controls as boxed UI', async () =>
   const hudSource = renderSource.slice(hudStart, hudEnd);
 
   assert.match(officeSource, /state\.ui\.push\(\{ id: 'toggleCctv'/);
+  assert.match(officeSource, /drawButton\(ctx, state, 'toggleCctv', 'CCTV', 500, 638, 280, 48\)/);
   assert.match(officeSource, /drawHud\(ctx, state, \{ boxed: false \}\)/);
-  assert.doesNotMatch(officeSource, /drawButton\(ctx, state, 'toggleCctv', 'CCTV'/);
   assert.match(controlsSource, /drawButton\(ctx, state, 'leftDoor'/);
   assert.match(controlsSource, /drawButton\(ctx, state, 'leftLight'/);
   assert.match(controlsSource, /drawButton\(ctx, state, 'rightDoor'/);
