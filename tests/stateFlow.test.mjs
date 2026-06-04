@@ -171,6 +171,34 @@ test('wrong camera does not freeze Grok when AI roll succeeds', () => {
   assert.notEqual(state.enemies[0].currentRoom, ROOMS.CAM_4A_RIGHT_HALL_FAR);
 });
 
+test('watching the starting stage holds all three stage occupants until CCTV is lowered', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'stage-watch-holds' });
+  state.currentMonth = 5;
+  state.screen = STATES.CCTV;
+  state.cameraOpen = true;
+  state.selectedCameraIndex = state.cameras.indexOf(ROOMS.CAM_1A_STAGE);
+  state.rng = alwaysSuccessRng;
+  state.enemies = ['gemini', 'grok', 'chatgpt'].map((id) => ({
+    ...createEnemy(id, 5, createSeededRng(`stage-watch-holds-${id}`)),
+    actionCooldown: 0.1,
+    aiLevelsByMonthPhase: { 5: [20, 20, 20, 20, 20, 20] }
+  }));
+
+  tick(state, 20, 0.5);
+  assert.deepEqual(state.enemies.map((enemy) => enemy.currentRoom), [
+    ROOMS.CAM_1A_STAGE,
+    ROOMS.CAM_1A_STAGE,
+    ROOMS.CAM_1A_STAGE
+  ]);
+
+  state.screen = STATES.OFFICE;
+  state.cameraOpen = false;
+  tick(state, 5.5, 0.5);
+
+  assert.ok(state.enemies.some((enemy) => enemy.currentRoom !== ROOMS.CAM_1A_STAGE));
+});
+
 test('blocked Bonnie and Chica-style door attempts return to CAM 1B', () => {
   const state = createInitialState();
   startRun(state, { seed: 'door-return-1b' });

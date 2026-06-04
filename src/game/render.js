@@ -60,6 +60,8 @@ const STAGE_CAMERA_VARIANTS = Object.freeze({
   'chatgpt+gemini+grok': 'CAM_1A_STAGE'
 });
 
+const STAGE_TRIO_ALT_KEY = 'chatgpt+gemini+grok';
+
 const CCTV_MAP_LAYOUT_ORIGIN = Object.freeze({ x: 870, y: 294 });
 const CCTV_MAP_LABEL_SIZE = Object.freeze({ w: 56, h: 40 });
 const CCTV_MAP_LAYOUT = Object.freeze({
@@ -590,7 +592,16 @@ function getCameraBackground(state, assets, camera) {
       .map((enemy) => enemy.id)
       .sort();
     if (!atStage.length) return assets.images.cameras.stageEmpty;
-    const stageVariant = STAGE_CAMERA_VARIANTS[atStage.join('+')];
+    const stageKey = atStage.join('+');
+    if (stageKey === STAGE_TRIO_ALT_KEY) {
+      if (state.stageTrioAltRoll?.key !== stageKey) {
+        state.stageTrioAltRoll = { key: stageKey, useAlt: state.rng.chance(0.1) };
+      }
+      if (state.stageTrioAltRoll.useAlt && assets.images.cameras.stageTrioAlt) return assets.images.cameras.stageTrioAlt;
+    } else if (state.stageTrioAltRoll) {
+      state.stageTrioAltRoll = null;
+    }
+    const stageVariant = STAGE_CAMERA_VARIANTS[stageKey];
     return assets.images.cameras[stageVariant] ?? assets.images.cameras.CAM_1A_STAGE;
   }
   if (camera === ROOMS.CAM_1C_CLAUDE_CLOSET) {

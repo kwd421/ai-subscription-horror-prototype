@@ -92,6 +92,7 @@ export function createInitialState() {
     reduceMotion: false,
     muted: false,
     approachLog: [],
+    stageTrioAltRoll: null,
     titleGlitch: createTitleGlitch(rng),
     ui: []
   };
@@ -156,6 +157,7 @@ export function startMonth(state, month, options = {}) {
   state.screenShake = 0;
   state.panicTimer = 0;
   state.approachLog = [];
+  state.stageTrioAltRoll = null;
 }
 
 export function advanceAfterClear(state) {
@@ -172,6 +174,7 @@ export function toggleCamera(state) {
   if (state.doors.lockedByTokenOut || state.tokens <= 0) return false;
   state.cameraOpen = !state.cameraOpen;
   state.screen = state.cameraOpen ? STATES.CCTV : STATES.OFFICE;
+  state.stageTrioAltRoll = null;
   state.staticBurst = Math.max(state.staticBurst, 0.22);
   return true;
 }
@@ -180,12 +183,14 @@ export function closeCamera(state) {
   if (state.screen === STATES.CCTV) {
     state.cameraOpen = false;
     state.screen = STATES.OFFICE;
+    state.stageTrioAltRoll = null;
   }
 }
 
 export function switchCamera(state, direction) {
   if (state.screen !== STATES.CCTV) return false;
   state.selectedCameraIndex = (state.selectedCameraIndex + direction + state.cameras.length) % state.cameras.length;
+  state.stageTrioAltRoll = null;
   state.staticBurst = Math.max(state.staticBurst, 0.3);
   return true;
 }
@@ -195,6 +200,7 @@ export function selectCamera(state, camera) {
   const index = state.cameras.indexOf(camera);
   if (index < 0) return false;
   state.selectedCameraIndex = index;
+  state.stageTrioAltRoll = null;
   state.staticBurst = Math.max(state.staticBurst, 0.24);
   return true;
 }

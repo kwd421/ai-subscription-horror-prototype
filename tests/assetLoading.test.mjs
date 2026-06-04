@@ -126,7 +126,8 @@ test('CAM 1A stage variants cover the trio, empty stage, and all non-Claude sing
     stageGeminiOnly: 'cam_1a_stage_gemini_only.png',
     stageChatgptGrok: 'cam_1a_stage_chatgpt_grok.png',
     stageChatgptGemini: 'cam_1a_stage_chatgpt_gemini.png',
-    stageGeminiGrok: 'cam_1a_stage_gemini_grok.png'
+    stageGeminiGrok: 'cam_1a_stage_gemini_grok.png',
+    stageTrioAlt: 'cam_1a_stage_trio_alt.png'
   };
 
   assert.notEqual(stageStart, -1);
@@ -141,6 +142,9 @@ test('CAM 1A stage variants cover the trio, empty stage, and all non-Claude sing
     assert.ok(existsSync(`assets/generated/${fileName}`), `${fileName} should exist`);
   }
   assert.match(renderSource, /const STAGE_CAMERA_VARIANTS = Object\.freeze/);
+  assert.match(stageSource, /STAGE_TRIO_ALT_KEY/);
+  assert.match(stageSource, /stageTrioAlt/);
+  assert.match(stageSource, /chance\(0\.1\)/);
   assert.doesNotMatch(stageSource, /claudeMissing|stageMissingClaude|stageMissingGemini|stageMissingGrok/);
 });
 
