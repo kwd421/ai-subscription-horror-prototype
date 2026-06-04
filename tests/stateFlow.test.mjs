@@ -29,6 +29,14 @@ const silentAudio = {
   thud() {}
 };
 
+const alwaysSuccessRng = {
+  next() { return 0; },
+  range(min) { return min; },
+  int() { return 1; },
+  chance() { return false; },
+  choice(items) { return items[0]; }
+};
+
 function tick(state, seconds, dt = 0.25) {
   for (let elapsed = 0; elapsed < seconds; elapsed += dt) {
     updateState(state, dt, silentAudio);
@@ -163,6 +171,122 @@ test('wrong camera does not freeze Grok when AI roll succeeds', () => {
   assert.notEqual(state.enemies[0].currentRoom, ROOMS.CAM_4A_RIGHT_HALL_FAR);
 });
 
+test('blocked Bonnie and Chica-style door attempts return to CAM 1B', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'door-return-1b' });
+  state.enemies = [
+    {
+      ...createEnemy('grok', 5, createSeededRng('door-return-1b')),
+      currentRoom: ROOMS.RIGHT_DOOR,
+      routeIndex: 6,
+      side: 'right',
+      doorAttackTimer: 0
+    }
+  ];
+  state.doors.rightClosed = true;
+
+  updateState(state, 0.05, silentAudio);
+
+  assert.equal(state.enemies[0].currentRoom, ROOMS.CAM_1B_LOBBY);
+  assert.equal(state.enemies[0].routeIndex, 1);
+});
+
+test('ChatGPT waits for the stage peers to leave before moving from CAM 1A', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'freddy-stage-wait' });
+  state.currentMonth = 5;
+  state.rng = alwaysSuccessRng;
+  state.enemies = [
+    {
+      ...createEnemy('chatgpt', 5, createSeededRng('freddy-stage-wait-chatgpt')),
+      actionCooldown: 0.1,
+      aiLevelsByMonthPhase: { 5: [20, 20, 20, 20, 20, 20] }
+    },
+    {
+      ...createEnemy('gemini', 5, createSeededRng('freddy-stage-wait-gemini')),
+      currentRoom: ROOMS.CAM_1A_STAGE
+    }
+  ];
+
+  tick(state, 6, 0.5);
+
+  assert.equal(state.enemies[0].currentRoom, ROOMS.CAM_1A_STAGE);
+});
+
+test('ChatGPT movement opportunities only roll while the camera is down', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'freddy-camera-down-only' });
+  state.currentMonth = 5;
+  state.screen = STATES.CCTV;
+  state.cameraOpen = true;
+  state.selectedCameraIndex = state.cameras.indexOf(ROOMS.CAM_1B_LOBBY);
+  state.rng = alwaysSuccessRng;
+  state.enemies = [
+    {
+      ...createEnemy('chatgpt', 5, createSeededRng('freddy-camera-down-only')),
+      actionCooldown: 0.1,
+      aiLevelsByMonthPhase: { 5: [20, 20, 20, 20, 20, 20] }
+    }
+  ];
+
+  tick(state, 6, 0.5);
+
+  assert.equal(state.enemies[0].currentRoom, ROOMS.CAM_1A_STAGE);
+});
+
+test('ChatGPT successful movement rolls wait out the Freddy delay before moving', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'freddy-delay' });
+  state.currentMonth = 5;
+  state.rng = alwaysSuccessRng;
+  state.enemies = [
+    {
+      ...createEnemy('chatgpt', 5, createSeededRng('freddy-delay')),
+      currentRoom: ROOMS.CAM_1B_LOBBY,
+      routeIndex: 1,
+      actionCooldown: 0.1,
+      aiLevelsByMonthPhase: { 5: [8, 8, 8, 8, 8, 8] }
+    }
+  ];
+
+  tick(state, 0.5, 0.1);
+  assert.equal(state.enemies[0].currentRoom, ROOMS.CAM_1B_LOBBY);
+  assert.ok(state.enemies[0].freddyMovePending);
+
+  tick(state, 3.2, 0.1);
+  assert.equal(state.enemies[0].currentRoom, ROOMS.CAM_7_RESTROOMS);
+});
+
+test('ChatGPT cannot enter from CAM 4B until the camera is raised and returns to CAM 4A when blocked', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'freddy-4b-camera-gate' });
+  state.currentMonth = 5;
+  state.rng = alwaysSuccessRng;
+  state.enemies = [
+    {
+      ...createEnemy('chatgpt', 5, createSeededRng('freddy-4b-camera-gate')),
+      currentRoom: ROOMS.CAM_4B_RIGHT_HALL_NEAR,
+      routeIndex: 5,
+      actionCooldown: 0.1,
+      aiLevelsByMonthPhase: { 5: [20, 20, 20, 20, 20, 20] }
+    }
+  ];
+
+  tick(state, 6, 0.5);
+  assert.equal(state.enemies[0].currentRoom, ROOMS.CAM_4B_RIGHT_HALL_NEAR);
+
+  state.screen = STATES.CCTV;
+  state.cameraOpen = true;
+  state.selectedCameraIndex = state.cameras.indexOf(ROOMS.CAM_1B_LOBBY);
+  tick(state, 0.5, 0.5);
+  assert.equal(state.enemies[0].currentRoom, ROOMS.RIGHT_DOOR);
+
+  state.doors.rightClosed = true;
+  tick(state, 1.5, 0.1);
+  assert.equal(state.enemies[0].currentRoom, ROOMS.CAM_4A_RIGHT_HALL_FAR);
+  assert.equal(state.enemies[0].routeIndex, 4);
+});
+
 test('Claude sprint continues even while the left hallway camera is watched', () => {
   const state = createInitialState();
   startRun(state, { seed: 'claude-sprint' });
@@ -182,6 +306,69 @@ test('Claude sprint continues even while the left hallway camera is watched', ()
   tick(state, 1.5, 0.1);
 
   assert.notEqual(state.enemies[0].currentRoom, ROOMS.CAM_2A_LEFT_HALL_FAR);
+});
+
+test('Claude stage interval pauses on CAM 1C without growing extra cooldown', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'foxy-1c-pause' });
+  state.currentMonth = 5;
+  state.screen = STATES.CCTV;
+  state.cameraOpen = true;
+  state.selectedCameraIndex = state.cameras.indexOf(ROOMS.CAM_1C_CLAUDE_CLOSET);
+  state.enemies = [
+    {
+      ...createEnemy('claude', 5, createSeededRng('foxy-1c-pause')),
+      actionCooldown: 1,
+      aiLevelsByMonthPhase: { 5: [20, 20, 20, 20, 20, 20] }
+    }
+  ];
+
+  tick(state, 5, 0.5);
+
+  assert.equal(state.enemies[0].visualState, 'CLOSET_STAGE_0');
+  assert.equal(state.enemies[0].actionCooldown, 1);
+});
+
+test('Claude cannot advance stages while any CCTV camera is raised', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'foxy-other-camera-hold' });
+  state.currentMonth = 5;
+  state.screen = STATES.CCTV;
+  state.cameraOpen = true;
+  state.selectedCameraIndex = state.cameras.indexOf(ROOMS.CAM_1A_STAGE);
+  state.rng = alwaysSuccessRng;
+  state.enemies = [
+    {
+      ...createEnemy('claude', 5, createSeededRng('foxy-other-camera-hold')),
+      actionCooldown: 0.1,
+      aiLevelsByMonthPhase: { 5: [20, 20, 20, 20, 20, 20] }
+    }
+  ];
+
+  tick(state, 6, 0.5);
+
+  assert.equal(state.enemies[0].visualState, 'CLOSET_STAGE_0');
+});
+
+test('Claude waits after CCTV is lowered before taking another stage action', () => {
+  const state = createInitialState();
+  startRun(state, { seed: 'foxy-camera-drop-delay' });
+  state.currentMonth = 5;
+  state.rng = alwaysSuccessRng;
+  state.enemies = [
+    {
+      ...createEnemy('claude', 5, createSeededRng('foxy-camera-drop-delay')),
+      actionCooldown: 0,
+      cameraDropFreezeTimer: 0.83,
+      aiLevelsByMonthPhase: { 5: [20, 20, 20, 20, 20, 20] }
+    }
+  ];
+
+  tick(state, 0.5, 0.1);
+  assert.equal(state.enemies[0].visualState, 'CLOSET_STAGE_0');
+
+  tick(state, 0.5, 0.1);
+  assert.equal(state.enemies[0].visualState, 'CLOSET_STAGE_1');
 });
 
 test('left light reveals a door enemy and closed door repels it', () => {

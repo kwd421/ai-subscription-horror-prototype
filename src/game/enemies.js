@@ -47,8 +47,8 @@ export const ENEMY_DEFS = Object.freeze({
       ROOMS.CAM_2B_LEFT_HALL_NEAR,
       ROOMS.LEFT_DOOR
     ],
-    actionIntervalMin: 3,
-    actionIntervalMax: 5
+    actionIntervalMin: 4.97,
+    actionIntervalMax: 4.97
   },
   grok: {
     id: 'grok',
@@ -65,8 +65,8 @@ export const ENEMY_DEFS = Object.freeze({
       ROOMS.CAM_4B_RIGHT_HALL_NEAR,
       ROOMS.RIGHT_DOOR
     ],
-    actionIntervalMin: 2.6,
-    actionIntervalMax: 4.7
+    actionIntervalMin: 4.98,
+    actionIntervalMax: 4.98
   },
   chatgpt: {
     id: 'chatgpt',
@@ -83,8 +83,8 @@ export const ENEMY_DEFS = Object.freeze({
       ROOMS.CAM_4B_RIGHT_HALL_NEAR,
       ROOMS.RIGHT_DOOR
     ],
-    actionIntervalMin: 3,
-    actionIntervalMax: 3
+    actionIntervalMin: 3.02,
+    actionIntervalMax: 3.02
   },
   claude: {
     id: 'claude',
@@ -93,12 +93,15 @@ export const ENEMY_DEFS = Object.freeze({
     role: 'curtain-runner',
     side: 'left',
     route: [],
-    actionIntervalMin: 3,
-    actionIntervalMax: 5
+    actionIntervalMin: 5.01,
+    actionIntervalMax: 5.01
   }
 });
 
 const DOOR_ATTACK_GRACE_SECONDS = 1.05;
+const FREDDY_MOVE_DELAY_FACTOR = 1.66;
+const FOXY_CAMERA_DROP_FREEZE_MIN = 0.83;
+const FOXY_CAMERA_DROP_FREEZE_MAX = 17.48;
 const SPRINT_ROOMS = [
   ROOMS.CAM_2A_LEFT_HALL_FAR,
   ROOMS.CAM_2B_LEFT_HALL_NEAR,
@@ -128,6 +131,10 @@ export function createEnemy(id, month, rng) {
     approachLogged: false,
     lastWatchedAt: null,
     freezeAfterCameraCloseTimer: 0,
+    freddyMovePending: false,
+    freddyMoveDelayTimer: null,
+    cameraDropFreezeTimer: 0,
+    wasCameraOpen: false,
     pose: id === 'claude' ? 'closet_peek1' : 'idle_close',
     doorAttackTimer: null,
     active: true
@@ -150,6 +157,7 @@ export function createMonthEnemies(month, rng) {
 export function tickEnemy(enemy, dt, context) {
   if (!enemy.active) return { enemy, events: [] };
   if (enemy.id === 'claude') return tickClaude(enemy, dt, context);
+  if (enemy.id === 'chatgpt') return tickFreddy(enemy, dt, context);
   return tickPathEnemy(enemy, dt, context);
 }
 
@@ -184,7 +192,9 @@ export function resolveDoorAttack(enemy, doors, rng) {
     };
   }
 
-  const fallbackRoom = enemy.side === 'left' ? ROOMS.CAM_1B_LOBBY : ROOMS.CAM_6_SERVER_KITCHEN;
+  const fallbackRoom = enemy.id === 'chatgpt'
+    ? ROOMS.CAM_4A_RIGHT_HALL_FAR
+    : ROOMS.CAM_1B_LOBBY;
   const fallbackIndex = Math.max(1, enemy.route.indexOf(fallbackRoom));
   return {
     outcome: 'repelled',
@@ -261,6 +271,101 @@ function tickPathEnemy(enemy, dt, context) {
   return { enemy: moved, events };
 }
 
+function tickFreddy(enemy, dt, context) {
+  const watched = context.cameraOpen && context.selectedCamera === enemy.currentRoom;
+  const aiLevel = getAiLevel(enemy, context.month, context.phaseIndex);
+  const delay = freddyMoveDelaySeconds(aiLevel);
+
+  if (watched) {
+    return {
+      enemy: {
+        ...enemy,
+        lastWatchedAt: context.elapsed,
+        pose: 'camera_stare',
+        freddyMoveDelayTimer: delay
+      },
+      events: []
+    };
+  }
+
+  if (isDoorRoom(enemy.currentRoom)) {
+    const doorAttackTimer = Math.max(0, (enemy.doorAttackTimer ?? DOOR_ATTACK_GRACE_SECONDS) - dt);
+    if (doorAttackTimer > 0) return { enemy: { ...enemy, doorAttackTimer, pose: 'door_peek' }, events: [] };
+    return { enemy: { ...enemy, doorAttackTimer: 0, pose: 'door_peek' }, events: [{ type: 'doorAttack', enemy }] };
+  }
+
+  if (enemy.freddyMovePending) {
+    const canEnterFrom4B = enemy.currentRoom !== ROOMS.CAM_4B_RIGHT_HALL_NEAR || context.cameraOpen;
+    const freddyMoveDelayTimer = Math.max(0, (enemy.freddyMoveDelayTimer ?? delay) - dt);
+    if (freddyMoveDelayTimer > 0 || !canEnterFrom4B) {
+      return {
+        enemy: {
+          ...enemy,
+          freddyMoveDelayTimer,
+          pose: poseForPathRoom(enemy.currentRoom)
+        },
+        events: []
+      };
+    }
+
+    const moved = advancePathEnemy({
+      ...enemy,
+      freddyMovePending: false,
+      freddyMoveDelayTimer: null
+    }, context);
+    const side = sideForRoom(moved.currentRoom);
+    const events = side && !enemy.approachLogged
+      ? [{ type: 'approach', id: moved.id, side, room: moved.currentRoom }]
+      : [];
+    return {
+      enemy: {
+        ...moved,
+        approachLogged: enemy.approachLogged || Boolean(side)
+      },
+      events
+    };
+  }
+
+  if (context.cameraOpen) return { enemy, events: [] };
+
+  const actionCooldown = enemy.actionCooldown - dt;
+  if (actionCooldown > 0) return { enemy: { ...enemy, actionCooldown }, events: [] };
+
+  const base = {
+    ...enemy,
+    actionCooldown: nextActionCooldown(enemy, context.rng)
+  };
+
+  if (!rollAction(enemy, context)) return { enemy: base, events: [] };
+  if (enemy.currentRoom === ROOMS.CAM_1A_STAGE && !canFreddyLeaveStage(enemy, context)) {
+    return { enemy: base, events: [] };
+  }
+
+  if (delay <= 0 && enemy.currentRoom !== ROOMS.CAM_4B_RIGHT_HALL_NEAR) {
+    const moved = advancePathEnemy(base, context);
+    const side = sideForRoom(moved.currentRoom);
+    const events = side && !enemy.approachLogged
+      ? [{ type: 'approach', id: moved.id, side, room: moved.currentRoom }]
+      : [];
+    return {
+      enemy: {
+        ...moved,
+        approachLogged: enemy.approachLogged || Boolean(side)
+      },
+      events
+    };
+  }
+
+  return {
+    enemy: {
+      ...base,
+      freddyMovePending: true,
+      freddyMoveDelayTimer: delay
+    },
+    events: []
+  };
+}
+
 function tickClaude(enemy, dt, context) {
   if (enemy.visualState === 'SPRINTING_LEFT_HALL') {
     const sprintTimer = Math.max(0, (enemy.sprintTimer ?? 0.45) - dt);
@@ -323,20 +428,55 @@ function tickClaude(enemy, dt, context) {
   }
 
   const exactClosetWatch = context.cameraOpen && context.selectedCamera === ROOMS.CAM_1C_CLAUDE_CLOSET;
-  const cctvSlow = context.cameraOpen ? 0.32 : 1;
   if (exactClosetWatch) {
     return {
       enemy: {
         ...enemy,
         lastWatchedAt: context.elapsed,
         pose: poseForClaudeStage(enemy.visualState),
-        actionCooldown: enemy.actionCooldown + dt * 0.2
+        wasCameraOpen: true
       },
       events: []
     };
   }
 
-  const actionCooldown = enemy.actionCooldown - dt * cctvSlow;
+  if (context.cameraOpen) {
+    const actionCooldown = enemy.actionCooldown - dt;
+    if (actionCooldown > 0) {
+      return {
+        enemy: {
+          ...enemy,
+          actionCooldown,
+          wasCameraOpen: true
+        },
+        events: []
+      };
+    }
+    return {
+      enemy: {
+        ...enemy,
+        actionCooldown: nextActionCooldown(enemy, context.rng),
+        wasCameraOpen: true
+      },
+      events: []
+    };
+  }
+
+  const cameraDropFreezeTimer = enemy.wasCameraOpen
+    ? Math.max(enemy.cameraDropFreezeTimer ?? 0, context.rng.range(FOXY_CAMERA_DROP_FREEZE_MIN, FOXY_CAMERA_DROP_FREEZE_MAX))
+    : enemy.cameraDropFreezeTimer;
+  if (cameraDropFreezeTimer > 0) {
+    return {
+      enemy: {
+        ...enemy,
+        cameraDropFreezeTimer: Math.max(0, cameraDropFreezeTimer - dt),
+        wasCameraOpen: false
+      },
+      events: []
+    };
+  }
+
+  const actionCooldown = enemy.actionCooldown - dt;
   if (actionCooldown > 0) return { enemy: { ...enemy, actionCooldown }, events: [] };
 
   const acted = rollAction(enemy, context);
@@ -394,6 +534,7 @@ function advancePathEnemy(enemy, context) {
 
 function isWatched(enemy, context) {
   if (enemy.id === 'claude') return false;
+  if (enemy.id === 'chatgpt') return false;
   return context.cameraOpen && context.selectedCamera === enemy.currentRoom;
 }
 
@@ -408,6 +549,18 @@ function getAiLevel(enemy, month, phaseIndex) {
 
 function nextActionCooldown(enemyOrDef, rng) {
   return rng.range(enemyOrDef.actionIntervalMin, enemyOrDef.actionIntervalMax);
+}
+
+function freddyMoveDelaySeconds(aiLevel) {
+  return aiLevel >= 10 ? 0 : Math.max(0, (10 - aiLevel) * FREDDY_MOVE_DELAY_FACTOR);
+}
+
+function canFreddyLeaveStage(enemy, context) {
+  return !(context.enemies ?? []).some((other) => (
+    other.id !== enemy.id &&
+    ['gemini', 'grok'].includes(other.id) &&
+    other.currentRoom === ROOMS.CAM_1A_STAGE
+  ));
 }
 
 function poseForPathRoom(room) {

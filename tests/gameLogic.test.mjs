@@ -87,6 +87,14 @@ test('enemy definitions match month-era role contracts and invoice plans', () =>
   assert.equal(claude.role, 'curtain-runner');
   assert.equal(claude.billingPlan, 'Claude Max $200');
   assert.equal(claude.visualState, 'CLOSET_STAGE_0');
+  assert.equal(gemini.actionIntervalMin, 4.97);
+  assert.equal(gemini.actionIntervalMax, 4.97);
+  assert.equal(grok.actionIntervalMin, 4.98);
+  assert.equal(grok.actionIntervalMax, 4.98);
+  assert.equal(chatgpt.actionIntervalMin, 3.02);
+  assert.equal(chatgpt.actionIntervalMax, 3.02);
+  assert.equal(claude.actionIntervalMin, 5.01);
+  assert.equal(claude.actionIntervalMax, 5.01);
 });
 
 test('token scoring follows GAMESPEC examples', () => {
@@ -125,6 +133,9 @@ test('CCTV map source has clickable cameras and no enemy position marker branch'
 
 test('CCTV map renders original-style connected CAM labels and YOU marker', async () => {
   const renderSource = await readFile('src/game/render.js', 'utf8');
+  const miniMapStart = renderSource.indexOf('function drawMiniMap');
+  const miniMapEnd = renderSource.indexOf('function drawCctvMapConnections', miniMapStart);
+  const miniMapSource = renderSource.slice(miniMapStart, miniMapEnd);
 
   assert.match(renderSource, /drawCctvMapConnections\(ctx\)/);
   assert.match(renderSource, /drawCctvMapLabel\(ctx, camera, x, y, w, h, selected\)/);
@@ -134,6 +145,8 @@ test('CCTV map renders original-style connected CAM labels and YOU marker', asyn
   assert.match(renderSource, /text\(ctx, 'YOU'/);
   assert.match(renderSource, /\[ROOMS\.CAM_7_RESTROOMS\]: '7'/);
   assert.doesNotMatch(renderSource, /shortCameraLabel\(camera\)/);
+  assert.doesNotMatch(miniMapSource, /fillRect\(CCTV_MAP_LAYOUT_ORIGIN\.x - 2, CCTV_MAP_LAYOUT_ORIGIN\.y, 412, 348\)/);
+  assert.doesNotMatch(miniMapSource, /rgba\(0, 0, 0, 0\.9\)/);
 });
 
 test('CCTV map uses compact hitboxes and corridor-style room outlines', async () => {

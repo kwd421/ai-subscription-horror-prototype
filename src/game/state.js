@@ -384,6 +384,7 @@ function tickEnemies(state, dt, audio) {
     phaseIndex: getPhaseIndex(state.elapsed),
     cameraOpen: state.screen === STATES.CCTV,
     selectedCamera,
+    enemies: state.enemies,
     rng: state.rng
   };
 

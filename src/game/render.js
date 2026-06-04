@@ -327,10 +327,8 @@ function drawCctvUi(ctx, state) {
 
 function drawMiniMap(ctx, state, selectedCamera) {
   ctx.save();
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
   ctx.strokeStyle = 'rgba(245, 250, 252, 0.86)';
   ctx.lineWidth = 2;
-  ctx.fillRect(CCTV_MAP_LAYOUT_ORIGIN.x - 2, CCTV_MAP_LAYOUT_ORIGIN.y, 412, 348);
   drawCctvMapConnections(ctx);
   drawYouMarker(ctx);
   for (const camera of CAMERAS) {
