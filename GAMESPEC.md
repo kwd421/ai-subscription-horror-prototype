@@ -653,11 +653,13 @@ Office:
 - monitor_frame_crt.png
 
 CCTV backgrounds:
-- cam_1a_stage_close_faces.png: creepy close-up group composition, not row of dolls
+- cam_1a_stage_missing_claude.png: creepy close-up ChatGPT/Gemini/Grok trio composition, not row of dolls
 - cam_1a_stage_chatgpt_only.png
-- cam_1a_stage_missing_gemini.png
-- cam_1a_stage_missing_grok.png
-- cam_1a_stage_missing_claude.png
+- cam_1a_stage_gemini_only.png
+- cam_1a_stage_grok_only.png
+- cam_1a_stage_chatgpt_gemini.png
+- cam_1a_stage_chatgpt_grok.png
+- cam_1a_stage_gemini_grok.png
 - cam_1a_stage_empty.png
 - cam_1b_lobby_paywall.png
 - cam_1c_claude_closet_stage0.png

@@ -25,11 +25,13 @@
     "clear": "clear_bg_ssalmeok_god.png"
   },
   "cameras": {
-    "CAM_1A_STAGE": "cam_1a_stage_close_faces.png",
+    "CAM_1A_STAGE": "cam_1a_stage_missing_claude.png",
     "stageChatgptOnly": "cam_1a_stage_chatgpt_only.png",
-    "stageMissingGemini": "cam_1a_stage_missing_gemini.png",
-    "stageMissingGrok": "cam_1a_stage_missing_grok.png",
-    "stageMissingClaude": "cam_1a_stage_missing_claude.png",
+    "stageGrokOnly": "cam_1a_stage_grok_only.png",
+    "stageGeminiOnly": "cam_1a_stage_gemini_only.png",
+    "stageChatgptGrok": "cam_1a_stage_chatgpt_grok.png",
+    "stageChatgptGemini": "cam_1a_stage_chatgpt_gemini.png",
+    "stageGeminiGrok": "cam_1a_stage_gemini_grok.png",
     "stageEmpty": "cam_1a_stage_empty.png",
     "CAM_1B_LOBBY": "cam_1b_lobby_paywall.png",
     "CAM_1C_CLAUDE_CLOSET": "cam_1c_claude_closet_stage0.png",

@@ -50,6 +50,16 @@ const CAMERA_ANCHORS = Object.freeze({
   }
 });
 
+const STAGE_CAMERA_VARIANTS = Object.freeze({
+  chatgpt: 'stageChatgptOnly',
+  gemini: 'stageGeminiOnly',
+  grok: 'stageGrokOnly',
+  'chatgpt+gemini': 'stageChatgptGemini',
+  'chatgpt+grok': 'stageChatgptGrok',
+  'gemini+grok': 'stageGeminiGrok',
+  'chatgpt+gemini+grok': 'CAM_1A_STAGE'
+});
+
 const CCTV_MAP_LAYOUT_ORIGIN = Object.freeze({ x: 910, y: 316 });
 const CCTV_MAP_LABEL_SIZE = Object.freeze({ w: 46, h: 34 });
 const CCTV_MAP_LAYOUT = Object.freeze({
@@ -541,21 +551,13 @@ function drawDoorThreats(ctx, state, assets) {
 
 function getCameraBackground(state, assets, camera) {
   if (camera === ROOMS.CAM_1A_STAGE) {
-    const atStage = new Set(
-      state.enemies
-        .filter((enemy) => enemy.id !== 'claude' && enemy.currentRoom === ROOMS.CAM_1A_STAGE)
-        .map((enemy) => enemy.id)
-    );
-    const claude = state.enemies.find((enemy) => enemy.id === 'claude');
-    const claudeMissing = !['CLOSET_STAGE_0', 'CLOSET_STAGE_1'].includes(claude?.visualState);
-    if (!atStage.size) return assets.images.cameras.stageEmpty;
-    if (atStage.has('chatgpt') && !atStage.has('gemini') && !atStage.has('grok')) {
-      return assets.images.cameras.stageChatgptOnly;
-    }
-    if (!atStage.has('gemini')) return assets.images.cameras.stageMissingGemini;
-    if (!atStage.has('grok')) return assets.images.cameras.stageMissingGrok;
-    if (claudeMissing) return assets.images.cameras.stageMissingClaude;
-    return assets.images.cameras.CAM_1A_STAGE;
+    const atStage = state.enemies
+      .filter((enemy) => enemy.id !== 'claude' && enemy.currentRoom === ROOMS.CAM_1A_STAGE)
+      .map((enemy) => enemy.id)
+      .sort();
+    if (!atStage.length) return assets.images.cameras.stageEmpty;
+    const stageVariant = STAGE_CAMERA_VARIANTS[atStage.join('+')];
+    return assets.images.cameras[stageVariant] ?? assets.images.cameras.CAM_1A_STAGE;
   }
   if (camera === ROOMS.CAM_1C_CLAUDE_CLOSET) {
     const claude = state.enemies.find((enemy) => enemy.id === 'claude');

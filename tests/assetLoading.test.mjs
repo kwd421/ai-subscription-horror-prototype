@@ -114,6 +114,36 @@ test('manifest defines room-specific occupied CCTV plates including multi-enemy 
   }
 });
 
+test('CAM 1A stage variants cover the trio, empty stage, and all non-Claude single and paired occupants', async () => {
+  const manifest = JSON.parse(await readFile('assets/generated/asset_manifest.json', 'utf8'));
+  const renderSource = await readFile('src/game/render.js', 'utf8');
+  const stageStart = renderSource.indexOf('if (camera === ROOMS.CAM_1A_STAGE)');
+  const stageEnd = renderSource.indexOf('if (camera === ROOMS.CAM_1C_CLAUDE_CLOSET)', stageStart);
+  const stageSource = renderSource.slice(stageStart, stageEnd);
+  const expectedStageVariants = {
+    stageChatgptOnly: 'cam_1a_stage_chatgpt_only.png',
+    stageGrokOnly: 'cam_1a_stage_grok_only.png',
+    stageGeminiOnly: 'cam_1a_stage_gemini_only.png',
+    stageChatgptGrok: 'cam_1a_stage_chatgpt_grok.png',
+    stageChatgptGemini: 'cam_1a_stage_chatgpt_gemini.png',
+    stageGeminiGrok: 'cam_1a_stage_gemini_grok.png'
+  };
+
+  assert.notEqual(stageStart, -1);
+  assert.notEqual(stageEnd, -1);
+  assert.equal(manifest.cameras?.CAM_1A_STAGE, 'cam_1a_stage_missing_claude.png');
+  assert.notEqual(manifest.cameras?.CAM_1A_STAGE, 'cam_1a_stage_close_faces.png');
+  assert.equal(manifest.cameras?.stageEmpty, 'cam_1a_stage_empty.png');
+  assert.ok(existsSync(`assets/generated/${manifest.cameras.CAM_1A_STAGE}`), 'full stage trio should exist');
+  assert.ok(existsSync(`assets/generated/${manifest.cameras.stageEmpty}`), 'empty stage should exist');
+  for (const [manifestKey, fileName] of Object.entries(expectedStageVariants)) {
+    assert.equal(manifest.cameras?.[manifestKey], fileName);
+    assert.ok(existsSync(`assets/generated/${fileName}`), `${fileName} should exist`);
+  }
+  assert.match(renderSource, /const STAGE_CAMERA_VARIANTS = Object\.freeze/);
+  assert.doesNotMatch(stageSource, /claudeMissing|stageMissingClaude|stageMissingGemini|stageMissingGrok/);
+});
+
 test('CCTV renderer has a visible Claude sprint branch for left hall cameras', async () => {
   const renderSource = await readFile('src/game/render.js', 'utf8');
   const drawStart = renderSource.indexOf('function drawCameraEnemies');
@@ -127,12 +157,13 @@ test('CCTV renderer has a visible Claude sprint branch for left hall cameras', a
   assert.match(drawCameraEnemiesSource, /drawShadowedSprite\(ctx, sprite/);
 });
 
-test('index loading screen uses the CAM 1A stage art and a live percent target', async () => {
+test('index loading screen uses the Claude-free CAM 1A stage art and a live percent target', async () => {
   const html = await readFile('index.html', 'utf8');
 
   assert.match(html, /id="loadingProgress"/);
-  assert.match(html, /assets\/generated\/cam_1a_stage_close_faces\.png/);
-  assert.ok(existsSync('assets/generated/cam_1a_stage_close_faces.png'));
+  assert.match(html, /assets\/generated\/cam_1a_stage_missing_claude\.png/);
+  assert.doesNotMatch(html, /assets\/generated\/cam_1a_stage_close_faces\.png/);
+  assert.ok(existsSync('assets/generated/cam_1a_stage_missing_claude.png'));
 });
 
 test('loading screen says asset loading without the static kicker copy', async () => {
