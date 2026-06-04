@@ -136,6 +136,32 @@ test('CCTV map renders original-style connected CAM labels and YOU marker', asyn
   assert.doesNotMatch(renderSource, /shortCameraLabel\(camera\)/);
 });
 
+test('CCTV map uses compact hitboxes and corridor-style room outlines', async () => {
+  const renderSource = await readFile('src/game/render.js', 'utf8');
+  const layoutStart = renderSource.indexOf('const CCTV_MAP_LABEL_SIZE');
+  const layoutEnd = renderSource.indexOf('const CAMERA_MAP_LABELS', layoutStart);
+  const layoutSource = renderSource.slice(layoutStart, layoutEnd);
+  const connectionsStart = renderSource.indexOf('function drawCctvMapConnections');
+  const connectionsEnd = renderSource.indexOf('function drawCctvMapLabel', connectionsStart);
+  const connectionsSource = renderSource.slice(connectionsStart, connectionsEnd);
+  const markerStart = renderSource.indexOf('function drawYouMarker');
+  const markerEnd = renderSource.indexOf('function drawMonthClear', markerStart);
+  const markerSource = renderSource.slice(markerStart, markerEnd);
+
+  assert.notEqual(layoutStart, -1);
+  assert.notEqual(connectionsStart, -1);
+  assert.notEqual(connectionsEnd, -1);
+  assert.notEqual(markerStart, -1);
+  assert.notEqual(markerEnd, -1);
+  assert.match(renderSource, /const CCTV_MAP_LABEL_SIZE = Object\.freeze\(\{ w: 46, h: 34 \}\)/);
+  assert.doesNotMatch(layoutSource, /58,\s*42/);
+  assert.match(connectionsSource, /drawFloorplanRect\(ctx/);
+  assert.match(connectionsSource, /drawRightServiceRooms\(ctx/);
+  assert.doesNotMatch(connectionsSource, /drawMapPath\(ctx/);
+  assert.match(markerSource, /const markerW = 36/);
+  assert.match(markerSource, /const markerH = 48/);
+});
+
 test('HUD source follows original-style time, token, and usage placement', async () => {
   const renderSource = await readFile('src/game/render.js', 'utf8');
 

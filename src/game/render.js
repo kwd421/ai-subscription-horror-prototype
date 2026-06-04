@@ -51,18 +51,19 @@ const CAMERA_ANCHORS = Object.freeze({
 });
 
 const CCTV_MAP_LAYOUT_ORIGIN = Object.freeze({ x: 910, y: 316 });
+const CCTV_MAP_LABEL_SIZE = Object.freeze({ w: 46, h: 34 });
 const CCTV_MAP_LAYOUT = Object.freeze({
-  [ROOMS.CAM_1A_STAGE]: [CCTV_MAP_LAYOUT_ORIGIN.x + 86, CCTV_MAP_LAYOUT_ORIGIN.y + 8, 58, 42],
-  [ROOMS.CAM_1B_LOBBY]: [CCTV_MAP_LAYOUT_ORIGIN.x + 86, CCTV_MAP_LAYOUT_ORIGIN.y + 82, 58, 42],
-  [ROOMS.CAM_1C_CLAUDE_CLOSET]: [CCTV_MAP_LAYOUT_ORIGIN.x + 12, CCTV_MAP_LAYOUT_ORIGIN.y + 150, 58, 42],
-  [ROOMS.CAM_2A_LEFT_HALL_FAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 80, CCTV_MAP_LAYOUT_ORIGIN.y + 240, 58, 42],
-  [ROOMS.CAM_2B_LEFT_HALL_NEAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 80, CCTV_MAP_LAYOUT_ORIGIN.y + 286, 58, 42],
-  [ROOMS.CAM_3_SUPPLY_CLOSET]: [CCTV_MAP_LAYOUT_ORIGIN.x + 8, CCTV_MAP_LAYOUT_ORIGIN.y + 238, 58, 42],
-  [ROOMS.CAM_4A_RIGHT_HALL_FAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 184, CCTV_MAP_LAYOUT_ORIGIN.y + 240, 58, 42],
-  [ROOMS.CAM_4B_RIGHT_HALL_NEAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 184, CCTV_MAP_LAYOUT_ORIGIN.y + 286, 58, 42],
-  [ROOMS.CAM_5_BACKSTAGE]: [CCTV_MAP_LAYOUT_ORIGIN.x + 8, CCTV_MAP_LAYOUT_ORIGIN.y + 82, 58, 42],
-  [ROOMS.CAM_6_SERVER_KITCHEN]: [CCTV_MAP_LAYOUT_ORIGIN.x + 246, CCTV_MAP_LAYOUT_ORIGIN.y + 224, 58, 42],
-  [ROOMS.CAM_7_RESTROOMS]: [CCTV_MAP_LAYOUT_ORIGIN.x + 246, CCTV_MAP_LAYOUT_ORIGIN.y + 92, 58, 42]
+  [ROOMS.CAM_1A_STAGE]: [CCTV_MAP_LAYOUT_ORIGIN.x + 98, CCTV_MAP_LAYOUT_ORIGIN.y + 0, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_1B_LOBBY]: [CCTV_MAP_LAYOUT_ORIGIN.x + 84, CCTV_MAP_LAYOUT_ORIGIN.y + 58, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_1C_CLAUDE_CLOSET]: [CCTV_MAP_LAYOUT_ORIGIN.x + 58, CCTV_MAP_LAYOUT_ORIGIN.y + 138, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_2A_LEFT_HALL_FAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 86, CCTV_MAP_LAYOUT_ORIGIN.y + 248, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_2B_LEFT_HALL_NEAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 86, CCTV_MAP_LAYOUT_ORIGIN.y + 292, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_3_SUPPLY_CLOSET]: [CCTV_MAP_LAYOUT_ORIGIN.x + 6, CCTV_MAP_LAYOUT_ORIGIN.y + 236, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_4A_RIGHT_HALL_FAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 194, CCTV_MAP_LAYOUT_ORIGIN.y + 248, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_4B_RIGHT_HALL_NEAR]: [CCTV_MAP_LAYOUT_ORIGIN.x + 194, CCTV_MAP_LAYOUT_ORIGIN.y + 292, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_5_BACKSTAGE]: [CCTV_MAP_LAYOUT_ORIGIN.x + 6, CCTV_MAP_LAYOUT_ORIGIN.y + 90, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_6_SERVER_KITCHEN]: [CCTV_MAP_LAYOUT_ORIGIN.x + 284, CCTV_MAP_LAYOUT_ORIGIN.y + 230, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h],
+  [ROOMS.CAM_7_RESTROOMS]: [CCTV_MAP_LAYOUT_ORIGIN.x + 296, CCTV_MAP_LAYOUT_ORIGIN.y + 96, CCTV_MAP_LABEL_SIZE.w, CCTV_MAP_LABEL_SIZE.h]
 });
 
 const CAMERA_MAP_LABELS = Object.freeze({
@@ -272,8 +273,8 @@ function drawMiniMap(ctx, state, selectedCamera) {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.62)';
   ctx.strokeStyle = 'rgba(245, 250, 252, 0.86)';
   ctx.lineWidth = 2;
-  ctx.fillRect(CCTV_MAP_LAYOUT_ORIGIN.x - 20, CCTV_MAP_LAYOUT_ORIGIN.y - 30, 342, 362);
-  ctx.strokeRect(CCTV_MAP_LAYOUT_ORIGIN.x - 20, CCTV_MAP_LAYOUT_ORIGIN.y - 30, 342, 362);
+  ctx.fillRect(CCTV_MAP_LAYOUT_ORIGIN.x - 28, CCTV_MAP_LAYOUT_ORIGIN.y - 30, 382, 370);
+  ctx.strokeRect(CCTV_MAP_LAYOUT_ORIGIN.x - 28, CCTV_MAP_LAYOUT_ORIGIN.y - 30, 382, 370);
   drawCctvMapConnections(ctx);
   drawYouMarker(ctx);
   for (const camera of CAMERAS) {
@@ -293,51 +294,26 @@ function drawCctvMapConnections(ctx) {
   ctx.lineJoin = 'miter';
   ctx.lineCap = 'square';
 
-  ctx.strokeRect(x + 74, y + 56, 176, 166);
-  ctx.strokeRect(x - 2, y + 74, 60, 120);
-  ctx.strokeRect(x - 2, y + 214, 88, 112);
-  ctx.strokeRect(x + 226, y + 76, 64, 148);
-  ctx.strokeRect(x + 226, y + 224, 76, 70);
-
-  drawMapPath(ctx, [
-    [x + 116, y + 50],
-    [x + 116, y + 56]
-  ]);
-  drawMapPath(ctx, [
-    [x + 74, y + 102],
-    [x + 58, y + 102]
-  ]);
-  drawMapPath(ctx, [
-    [x + 74, y + 172],
-    [x + 58, y + 172],
-    [x + 58, y + 214]
-  ]);
-  drawMapPath(ctx, [
-    [x + 132, y + 222],
-    [x + 132, y + 326]
-  ]);
-  drawMapPath(ctx, [
-    [x + 212, y + 222],
-    [x + 212, y + 326]
-  ]);
-  drawMapPath(ctx, [
-    [x + 244, y + 114],
-    [x + 282, y + 114]
-  ]);
-  drawMapPath(ctx, [
-    [x + 244, y + 254],
-    [x + 276, y + 254]
-  ]);
+  drawFloorplanRect(ctx, x + 76, y + 48, 224, 168);
+  drawFloorplanRect(ctx, x + 112, y + 0, 58, 48);
+  drawFloorplanRect(ctx, x - 6, y + 78, 82, 138);
+  drawFloorplanRect(ctx, x - 6, y + 216, 96, 122);
+  drawFloorplanRect(ctx, x + 84, y + 216, 58, 122);
+  drawFloorplanRect(ctx, x + 184, y + 216, 58, 122);
+  drawFloorplanRect(ctx, x + 280, y + 78, 62, 142);
+  drawFloorplanRect(ctx, x + 280, y + 220, 76, 78);
+  drawRightServiceRooms(ctx, x, y);
   ctx.restore();
 }
 
-function drawMapPath(ctx, points) {
-  ctx.beginPath();
-  points.forEach(([x, y], index) => {
-    if (index === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
+function drawFloorplanRect(ctx, x, y, w, h) {
+  ctx.strokeRect(x, y, w, h);
+}
+
+function drawRightServiceRooms(ctx, x, y) {
+  drawFloorplanRect(ctx, x + 334, y + 96, 28, 46);
+  drawFloorplanRect(ctx, x + 334, y + 166, 30, 36);
+  drawFloorplanRect(ctx, x + 334, y + 230, 28, 52);
 }
 
 function drawCctvMapLabel(ctx, camera, x, y, w, h, selected) {
@@ -347,25 +323,26 @@ function drawCctvMapLabel(ctx, camera, x, y, w, h, selected) {
   ctx.lineWidth = selected ? 3 : 2;
   ctx.fillRect(x, y, w, h);
   ctx.strokeRect(x, y, w, h);
-  text(ctx, 'CAM', x + 6, y + 17, 14, selected ? '#111' : '#f8fbff', 'left', '900');
-  text(ctx, CAMERA_MAP_LABELS[camera], x + 8, y + 35, 15, selected ? '#111' : '#f8fbff', 'left', '900');
+  text(ctx, 'CAM', x + 5, y + 14, 12, selected ? '#111' : '#f8fbff', 'left', '900');
+  text(ctx, CAMERA_MAP_LABELS[camera], x + 7, y + 30, 13, selected ? '#111' : '#f8fbff', 'left', '900');
   ctx.restore();
 }
 
 function drawYouMarker(ctx) {
   const { x, y } = CCTV_MAP_LAYOUT_ORIGIN;
-  const markerX = x + 145;
-  const markerY = y + 286;
-  const markerSize = 36;
+  const markerX = x + 146;
+  const markerY = y + 290;
+  const markerW = 36;
+  const markerH = 48;
   ctx.save();
   ctx.fillStyle = 'rgba(178, 197, 40, 0.92)';
   ctx.strokeStyle = '#f8fbff';
   ctx.lineWidth = 2;
-  ctx.fillRect(markerX, markerY, markerSize, markerSize);
-  ctx.strokeRect(markerX, markerY, markerSize, markerSize);
-  text(ctx, 'YOU', markerX + markerSize / 2, markerY + 16, 12, '#f8fbff', 'center', '900');
+  ctx.fillRect(markerX, markerY, markerW, markerH);
+  ctx.strokeRect(markerX, markerY, markerW, markerH);
+  text(ctx, 'YOU', markerX + markerW / 2, markerY + 17, 12, '#f8fbff', 'center', '900');
   ctx.fillStyle = '#f8fbff';
-  ctx.fillRect(markerX + 14, markerY + 24, 8, 8);
+  ctx.fillRect(markerX + 14, markerY + 32, 8, 8);
   ctx.restore();
 }
 
