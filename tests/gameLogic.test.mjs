@@ -153,13 +153,27 @@ test('CCTV map uses compact hitboxes and corridor-style room outlines', async ()
   assert.notEqual(connectionsEnd, -1);
   assert.notEqual(markerStart, -1);
   assert.notEqual(markerEnd, -1);
-  assert.match(renderSource, /const CCTV_MAP_LABEL_SIZE = Object\.freeze\(\{ w: 46, h: 34 \}\)/);
+  assert.match(renderSource, /const CCTV_MAP_LABEL_SIZE = Object\.freeze\(\{ w: 56, h: 40 \}\)/);
+  assert.match(renderSource, /const CCTV_MAP_LAYOUT_ORIGIN = Object\.freeze\(\{ x: 870, y: 294 \}\)/);
   assert.doesNotMatch(layoutSource, /58,\s*42/);
-  assert.match(connectionsSource, /drawFloorplanRect\(ctx/);
-  assert.match(connectionsSource, /drawRightServiceRooms\(ctx/);
+  assert.match(layoutSource, /ROOMS\.CAM_1A_STAGE\]: \[CCTV_MAP_LAYOUT_ORIGIN\.x \+ 130, CCTV_MAP_LAYOUT_ORIGIN\.y \+ 0/);
+  assert.match(layoutSource, /ROOMS\.CAM_1B_LOBBY\]: \[CCTV_MAP_LAYOUT_ORIGIN\.x \+ 108, CCTV_MAP_LAYOUT_ORIGIN\.y \+ 62/);
+  assert.match(layoutSource, /ROOMS\.CAM_1C_CLAUDE_CLOSET\]: \[CCTV_MAP_LAYOUT_ORIGIN\.x \+ 78, CCTV_MAP_LAYOUT_ORIGIN\.y \+ 144/);
+  assert.match(layoutSource, /ROOMS\.CAM_7_RESTROOMS\]: \[CCTV_MAP_LAYOUT_ORIGIN\.x \+ 336, CCTV_MAP_LAYOUT_ORIGIN\.y \+ 91/);
+  assert.match(layoutSource, /ROOMS\.CAM_6_SERVER_KITCHEN\]: \[CCTV_MAP_LAYOUT_ORIGIN\.x \+ 316, CCTV_MAP_LAYOUT_ORIGIN\.y \+ 241/);
+  assert.doesNotMatch(renderSource, /ctx\.strokeRect\(CCTV_MAP_LAYOUT_ORIGIN\.x -/);
+  assert.match(renderSource, /const REFERENCE_CCTV_MAP_LINES = Object\.freeze/);
+  assert.match(connectionsSource, /drawReferenceMapLines\(ctx, x, y\)/);
+  assert.match(renderSource, /\[80, 61, 315, 61\]/);
+  assert.match(renderSource, /\[80, 203, 315, 203\]/);
+  assert.match(renderSource, /\[24, 229, 126, 229\]/);
+  assert.match(renderSource, /\[331, 88, 407, 88\]/);
+  assert.doesNotMatch(connectionsSource, /drawFloorplanRect/);
   assert.doesNotMatch(connectionsSource, /drawMapPath\(ctx/);
+  assert.match(markerSource, /const markerX = x \+ 188/);
+  assert.match(markerSource, /const markerY = y \+ 284/);
   assert.match(markerSource, /const markerW = 36/);
-  assert.match(markerSource, /const markerH = 48/);
+  assert.match(markerSource, /const markerH = 62/);
 });
 
 test('HUD source follows original-style time, token, and usage placement', async () => {
@@ -168,7 +182,7 @@ test('HUD source follows original-style time, token, and usage placement', async
   assert.match(renderSource, /drawTopRightTime\(ctx, state, boxed\)/);
   assert.match(renderSource, /drawBottomLeftTokenPanel\(ctx, state, boxed\)/);
   assert.match(renderSource, /drawUsageBars\(ctx, getUsageBarsForRender\(state\)\)/);
-  assert.match(renderSource, /const CCTV_MAP_LAYOUT_ORIGIN = Object\.freeze\(\{ x: 910, y: 316 \}\)/);
+  assert.match(renderSource, /const CCTV_MAP_LAYOUT_ORIGIN = Object\.freeze\(\{ x: 870, y: 294 \}\)/);
   assert.doesNotMatch(renderSource, /function drawGlobalToggles/);
   assert.doesNotMatch(renderSource, /id, label: labelText, x: 1000, y: 590/);
 });
